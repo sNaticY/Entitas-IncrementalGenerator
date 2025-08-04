@@ -22,6 +22,10 @@ Limitations:
 Setup:
 - Build the solution
 - Place Entitas.CodeGeneration.dll and Entitas.CodeGeneration.Attributes.dll somewhere within Assembly-CSharp.
+- For Entitas.CodeGeneration.dll, follow the Unity documentation: https://docs.unity3d.com/6000.1/Documentation/Manual/create-source-generator.html
+    - Under <b>Select platforms for plugin</b>, disable <b>Any Platform</b>.
+    - Under <b>Include Platforms</b>, disable <b>Editor</b> and <b>Standalone</b>.
+    - Under <b>Asset Labels</b>, click on the label icon to open the Asset labels sub-menu. Create and assign a new label called <b>RoslynAnalyzer</b>.
 
 Usage:
 - Define the Game Context attribute (it's the default context) as follow:
