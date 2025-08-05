@@ -7,6 +7,7 @@ using Entitas.CodeGeneration.Contexts;
 using Entitas.CodeGeneration.Contexts.Data;
 using Entitas.CodeGeneration.EntityIndex;
 using Entitas.CodeGeneration.Events;
+using Entitas.CodeGeneration.VisualDebugging;
 using Microsoft.CodeAnalysis;
 
 namespace Entitas.CodeGeneration;
@@ -14,8 +15,10 @@ namespace Entitas.CodeGeneration;
 [Generator]
 public class EntitasGenerator : IIncrementalGenerator
 {
-    const string MainAssembly = "Assembly-CSharp"; // TODO: Add support for config (in .editorconfig?)
+    const string MainAssembly = "Assembly-CSharp"; // TODO: Add config (in .editorconfig?)
     const string TestsAssembly = "Entitas.CodeGeneration-Tests";
+    
+    const bool VisualDebuggingGenerationEnabled = true; // TODO: Add config (in .editorconfig?)
     
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -29,6 +32,9 @@ public class EntitasGenerator : IIncrementalGenerator
         var componentsByContextNameLookup = ComponentsLookupGenerationHelper.GetComponentsByContextNameLookup(componentsData);
         RegisterIndividualComponentsGeneration(context, shouldRun, contextsData, componentsByContextNameLookup);
         RegisterSharedSourcesGeneration(context, shouldRun, contextsData, componentsData, componentsByContextNameLookup);
+
+        if (VisualDebuggingGenerationEnabled)
+            RegisterVisualDebuggingGeneration(context, contextsData);
     }
 
     void RegisterContextsGeneration(
@@ -89,7 +95,7 @@ public class EntitasGenerator : IIncrementalGenerator
         
         EntityIndexGenerationHelper.GenerateEntityIndices(spc, componentsByContextNameLookup, contextLookup);        
         CleanupGenerationHelper.GenerateCleanupSystems(spc, componentsByContextNameLookup, contextLookup);        
-        EventsGenerationHelper.GenerateEventSystems(spc, componentsByContextNameLookup, contextLookup);        
+        EventsGenerationHelper.GenerateEventSystems(spc, componentsByContextNameLookup, contextLookup);
     }
 
     void RegisterIndividualComponentsGeneration(
@@ -141,5 +147,32 @@ public class EntitasGenerator : IIncrementalGenerator
         
         if (componentData.HasCleanupAttribute)
             CleanupGenerationHelper.GenerateComponentCleanupSystem(spc, componentData, contextData);
+    }
+
+
+    void RegisterVisualDebuggingGeneration(
+        IncrementalGeneratorInitializationContext context,
+        in IncrementalValueProvider<ImmutableArray<ContextData>> contextsData)
+    {
+        // skip for tests, to avoid bloating snapshots
+        var shouldRun = context.CompilationProvider.Select(static (compilation, _) 
+            => compilation.AssemblyName is MainAssembly /*or TestsAssembly*/);
+
+        var combinedInput = shouldRun.Combine(contextsData);
+        context.RegisterSourceOutput(combinedInput, 
+            static (spc, source) => GenerateVisualDebugging(source, spc));
+    }
+
+    static void GenerateVisualDebugging(
+        (bool, ImmutableArray<ContextData>) input,
+        SourceProductionContext spc)
+    {
+        if (!input.Item1) // check shouldRun
+            return;
+
+        var contextsData = input.Item2;
+        
+        // Context Observers, Feature
+        VisualDebuggingGenerationHelper.Generate(spc, contextsData);
     }
 }
