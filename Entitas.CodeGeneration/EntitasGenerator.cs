@@ -21,7 +21,7 @@ public class EntitasGenerator : IIncrementalGenerator
     {
         var shouldRun = context.CompilationProvider.Select(static (compilation, _) 
             => compilation.AssemblyName is MainAssembly or TestsAssembly);
-        
+    
         var contextsData = ContextGenerationHelper.GetContextsData(context);
         RegisterContextsGeneration(context, shouldRun, contextsData);
         
@@ -130,12 +130,13 @@ public class EntitasGenerator : IIncrementalGenerator
             return;
 
         var componentData = input.Item2.Item2;
-        if (!componentData.ShouldGenerateEntityComponentSources)
-            return;
-
         var contextData = input.Item2.Item1;
-        
+
         ComponentGenerationHelper.GenerateEntityComponent(spc, componentData, contextData);
+        
+        if (componentData.IsGenerated)
+            return;
+        
         EventsGenerationHelper.GenerateComponentEvents(spc, componentData, contextData);
         
         if (componentData.HasCleanupAttribute)

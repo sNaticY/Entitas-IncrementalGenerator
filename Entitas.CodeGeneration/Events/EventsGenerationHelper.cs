@@ -38,7 +38,7 @@ public static class EventsGenerationHelper
                     members: ImmutableArray.Create(
                         new MemberData($"System.Collections.Generic.List<I{listenerComponentName}>", "value")
                     ),
-                    shouldGenerateEntityComponentSources: false // event listener components have custom sources
+                    isGenerated: true
                 );
                 
                 eventComponentsBuilder.Add(eventComponentData);
@@ -85,7 +85,7 @@ public static class EventsGenerationHelper
             .Replace("${EventListener}", eventListener)
             .Replace("${eventListener}", eventListenerLower);
 
-        spc.AddSource($"{contextData.ContextName + eventListenerComponent}.g.cs", 
+        spc.AddSource($"{contextData.ContextName + eventListenerComponent}Event.g.cs", 
             SourceText.From(eventEntitySource, Encoding.UTF8));
     }
     

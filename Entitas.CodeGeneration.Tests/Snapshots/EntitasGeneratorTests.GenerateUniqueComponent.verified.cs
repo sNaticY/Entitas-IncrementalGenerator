@@ -17,13 +17,13 @@ public partial class Contexts : Entitas.IContexts
 
     static Contexts _sharedInstance;
 
-    public GameContext Game { get; set; }
+    public GameContext game { get; set; }
 
-    public Entitas.IContext[] allContexts { get { return new Entitas.IContext [] { Game }; } }
+    public Entitas.IContext[] allContexts { get { return new Entitas.IContext [] { game }; } }
 
     public Contexts()
     {
-        Game = new GameContext();
+        game = new GameContext();
 
         var postConstructors = System.Linq.Enumerable.Where(
             GetType().GetMethods(),
@@ -61,17 +61,20 @@ public sealed class GameCleanupSystems : Feature
 public static class GameComponentsLookup
 {
     public const int TestUnique = 0;
+    public const int TestUniqueFlag = 1;
 
-    public const int TotalComponents = 1;
+    public const int TotalComponents = 2;
 
     public static readonly string[] componentNames = 
     {
-        "TestUnique"
+        "TestUnique",
+        "TestUniqueFlag"
     };
 
     public static readonly System.Type[] componentTypes = 
     {
-        typeof(TestUniqueComponent)
+        typeof(TestUniqueComponent),
+        typeof(TestUniqueFlagComponent)
     };
 }
 
@@ -224,6 +227,83 @@ public sealed partial class GameMatcher
             }
 
             return _matcherTestUnique;
+        }
+    }
+}
+
+
+// GameTestUniqueFlagComponent.g.cs
+public partial class GameContext
+{
+    public GameEntity testUniqueFlagEntity { get { return GetGroup(GameMatcher.TestUniqueFlag).GetSingleEntity(); } }
+
+    public bool isTestUniqueFlag
+    {
+        get { return testUniqueFlagEntity != null; }
+        set
+        {
+            var entity = testUniqueFlagEntity;
+            if (value != (entity != null))
+            {
+                if (value)
+                {
+                    CreateEntity().isTestUniqueFlag = true;
+                }
+                else
+                {
+                    entity.Destroy();
+                }
+            }
+        }
+    }
+}
+
+public partial class GameEntity
+{
+    static readonly TestUniqueFlagComponent testUniqueFlagComponent = new TestUniqueFlagComponent();
+
+    public bool isTestUniqueFlag
+    {
+        get { return HasComponent(GameComponentsLookup.TestUniqueFlag); }
+        set 
+        {
+            if (value != isTestUniqueFlag)
+            {
+                var index = GameComponentsLookup.TestUniqueFlag;
+                if (value)
+                {
+                    var componentPool = GetComponentPool(index);
+                    var component = componentPool.Count > 0
+                            ? componentPool.Pop()
+                            : testUniqueFlagComponent;
+
+                    AddComponent(index, component);
+                }
+                else
+                {
+                    RemoveComponent(index);
+                }
+            }
+        }
+    }
+}
+
+public sealed partial class GameMatcher
+{
+    static Entitas.IMatcher<GameEntity> _matcherTestUniqueFlag;
+
+    public static Entitas.IMatcher<GameEntity> TestUniqueFlag
+    {
+        get
+        {
+            if (_matcherTestUniqueFlag == null)
+            {
+                var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.TestUniqueFlag);
+                matcher.componentNames = GameComponentsLookup.componentNames;
+                _matcherTestUniqueFlag = matcher;
+            }
+
+            return _matcherTestUniqueFlag;
         }
     }
 }

@@ -81,6 +81,11 @@ public class TestUniqueComponent : IComponent
 {
     public string Value;
 }
+
+[Unique]
+public class TestUniqueFlagComponent : IComponent
+{
+}
 ";
     
     // This test needs a component assigned to 2 contexts

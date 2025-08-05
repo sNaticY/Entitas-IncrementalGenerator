@@ -44,7 +44,7 @@ public sealed class AnyTestEventEventSystem : Entitas.ReactiveSystem<GameEntity>
 
 
 // AnyTestEventListenerComponent.g.cs
-[Entitas.CodeGeneration.Attributes.DontGenerate(false)]
+[Entitas.CodeGeneration.Attributes.DontGenerate]
 public sealed class AnyTestEventListenerComponent : Entitas.IComponent
 {
     public System.Collections.Generic.List<IAnyTestEventListener> value;
@@ -97,7 +97,7 @@ public sealed class AnyTestEventRemovedEventSystem : Entitas.ReactiveSystem<Game
 
 
 // AnyTestEventRemovedListenerComponent.g.cs
-[Entitas.CodeGeneration.Attributes.DontGenerate(false)]
+[Entitas.CodeGeneration.Attributes.DontGenerate]
 public sealed class AnyTestEventRemovedListenerComponent : Entitas.IComponent
 {
     public System.Collections.Generic.List<IAnyTestEventRemovedListener> value;
@@ -123,15 +123,15 @@ public partial class Contexts : Entitas.IContexts
 
     static Contexts _sharedInstance;
 
-    public GameContext Game { get; set; }
-    public InputContext Input { get; set; }
+    public GameContext game { get; set; }
+    public InputContext input { get; set; }
 
-    public Entitas.IContext[] allContexts { get { return new Entitas.IContext [] { Game, Input }; } }
+    public Entitas.IContext[] allContexts { get { return new Entitas.IContext [] { game, input }; } }
 
     public Contexts()
     {
-        Game = new GameContext();
-        Input = new InputContext();
+        game = new GameContext();
+        input = new InputContext();
 
         var postConstructors = System.Linq.Enumerable.Where(
             GetType().GetMethods(),
@@ -156,6 +156,55 @@ public partial class Contexts : Entitas.IContexts
 
 
 // GameAnyTestEventListenerComponent.g.cs
+public partial class GameEntity
+{
+    public AnyTestEventListenerComponent anyTestEventListener { get { return (AnyTestEventListenerComponent)GetComponent(GameComponentsLookup.AnyTestEventListener); } }
+    public bool hasAnyTestEventListener { get { return HasComponent(GameComponentsLookup.AnyTestEventListener); } }
+
+    public void AddAnyTestEventListener(System.Collections.Generic.List<IAnyTestEventListener> newValue)
+    {
+        var index = GameComponentsLookup.AnyTestEventListener;
+        var component = (AnyTestEventListenerComponent)CreateComponent(index, typeof(AnyTestEventListenerComponent));
+        component.value = newValue;
+        AddComponent(index, component);
+    }
+
+    public void ReplaceAnyTestEventListener(System.Collections.Generic.List<IAnyTestEventListener> newValue)
+    {
+        var index = GameComponentsLookup.AnyTestEventListener;
+        var component = (AnyTestEventListenerComponent)CreateComponent(index, typeof(AnyTestEventListenerComponent));
+        component.value = newValue;
+        ReplaceComponent(index, component);
+    }
+
+    public void RemoveAnyTestEventListener()
+    {
+        RemoveComponent(GameComponentsLookup.AnyTestEventListener);
+    }
+}
+
+public sealed partial class GameMatcher
+{
+    static Entitas.IMatcher<GameEntity> _matcherAnyTestEventListener;
+
+    public static Entitas.IMatcher<GameEntity> AnyTestEventListener
+    {
+        get
+        {
+            if (_matcherAnyTestEventListener == null)
+            {
+                var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.AnyTestEventListener);
+                matcher.componentNames = GameComponentsLookup.componentNames;
+                _matcherAnyTestEventListener = matcher;
+            }
+
+            return _matcherAnyTestEventListener;
+        }
+    }
+}
+
+
+// GameAnyTestEventListenerComponentEvent.g.cs
 public partial class GameEntity
 {
     public void AddAnyTestEventListener(IAnyTestEventListener value)
@@ -184,6 +233,55 @@ public partial class GameEntity
 
 
 // GameAnyTestEventRemovedListenerComponent.g.cs
+public partial class GameEntity
+{
+    public AnyTestEventRemovedListenerComponent anyTestEventRemovedListener { get { return (AnyTestEventRemovedListenerComponent)GetComponent(GameComponentsLookup.AnyTestEventRemovedListener); } }
+    public bool hasAnyTestEventRemovedListener { get { return HasComponent(GameComponentsLookup.AnyTestEventRemovedListener); } }
+
+    public void AddAnyTestEventRemovedListener(System.Collections.Generic.List<IAnyTestEventRemovedListener> newValue)
+    {
+        var index = GameComponentsLookup.AnyTestEventRemovedListener;
+        var component = (AnyTestEventRemovedListenerComponent)CreateComponent(index, typeof(AnyTestEventRemovedListenerComponent));
+        component.value = newValue;
+        AddComponent(index, component);
+    }
+
+    public void ReplaceAnyTestEventRemovedListener(System.Collections.Generic.List<IAnyTestEventRemovedListener> newValue)
+    {
+        var index = GameComponentsLookup.AnyTestEventRemovedListener;
+        var component = (AnyTestEventRemovedListenerComponent)CreateComponent(index, typeof(AnyTestEventRemovedListenerComponent));
+        component.value = newValue;
+        ReplaceComponent(index, component);
+    }
+
+    public void RemoveAnyTestEventRemovedListener()
+    {
+        RemoveComponent(GameComponentsLookup.AnyTestEventRemovedListener);
+    }
+}
+
+public sealed partial class GameMatcher
+{
+    static Entitas.IMatcher<GameEntity> _matcherAnyTestEventRemovedListener;
+
+    public static Entitas.IMatcher<GameEntity> AnyTestEventRemovedListener
+    {
+        get
+        {
+            if (_matcherAnyTestEventRemovedListener == null)
+            {
+                var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.AnyTestEventRemovedListener);
+                matcher.componentNames = GameComponentsLookup.componentNames;
+                _matcherAnyTestEventRemovedListener = matcher;
+            }
+
+            return _matcherAnyTestEventRemovedListener;
+        }
+    }
+}
+
+
+// GameAnyTestEventRemovedListenerComponentEvent.g.cs
 public partial class GameEntity
 {
     public void AddAnyTestEventRemovedListener(IAnyTestEventRemovedListener value)
@@ -322,6 +420,55 @@ public sealed class GameEventSystems : Feature
 // GameGameNamespaceAnyTestEvent3ListenerComponent.g.cs
 public partial class GameEntity
 {
+    public GameNamespaceAnyTestEvent3ListenerComponent gameNamespaceAnyTestEvent3Listener { get { return (GameNamespaceAnyTestEvent3ListenerComponent)GetComponent(GameComponentsLookup.GameNamespaceAnyTestEvent3Listener); } }
+    public bool hasGameNamespaceAnyTestEvent3Listener { get { return HasComponent(GameComponentsLookup.GameNamespaceAnyTestEvent3Listener); } }
+
+    public void AddGameNamespaceAnyTestEvent3Listener(System.Collections.Generic.List<INamespaceAnyTestEvent3Listener> newValue)
+    {
+        var index = GameComponentsLookup.GameNamespaceAnyTestEvent3Listener;
+        var component = (GameNamespaceAnyTestEvent3ListenerComponent)CreateComponent(index, typeof(GameNamespaceAnyTestEvent3ListenerComponent));
+        component.value = newValue;
+        AddComponent(index, component);
+    }
+
+    public void ReplaceGameNamespaceAnyTestEvent3Listener(System.Collections.Generic.List<INamespaceAnyTestEvent3Listener> newValue)
+    {
+        var index = GameComponentsLookup.GameNamespaceAnyTestEvent3Listener;
+        var component = (GameNamespaceAnyTestEvent3ListenerComponent)CreateComponent(index, typeof(GameNamespaceAnyTestEvent3ListenerComponent));
+        component.value = newValue;
+        ReplaceComponent(index, component);
+    }
+
+    public void RemoveGameNamespaceAnyTestEvent3Listener()
+    {
+        RemoveComponent(GameComponentsLookup.GameNamespaceAnyTestEvent3Listener);
+    }
+}
+
+public sealed partial class GameMatcher
+{
+    static Entitas.IMatcher<GameEntity> _matcherGameNamespaceAnyTestEvent3Listener;
+
+    public static Entitas.IMatcher<GameEntity> GameNamespaceAnyTestEvent3Listener
+    {
+        get
+        {
+            if (_matcherGameNamespaceAnyTestEvent3Listener == null)
+            {
+                var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.GameNamespaceAnyTestEvent3Listener);
+                matcher.componentNames = GameComponentsLookup.componentNames;
+                _matcherGameNamespaceAnyTestEvent3Listener = matcher;
+            }
+
+            return _matcherGameNamespaceAnyTestEvent3Listener;
+        }
+    }
+}
+
+
+// GameGameNamespaceAnyTestEvent3ListenerComponentEvent.g.cs
+public partial class GameEntity
+{
     public void AddGameNamespaceAnyTestEvent3Listener(IGameNamespaceAnyTestEvent3Listener value)
     {
         var listeners = hasGameNamespaceAnyTestEvent3Listener
@@ -348,6 +495,55 @@ public partial class GameEntity
 
 
 // GameGameNamespaceAnyTestEvent3RemovedListenerComponent.g.cs
+public partial class GameEntity
+{
+    public GameNamespaceAnyTestEvent3RemovedListenerComponent gameNamespaceAnyTestEvent3RemovedListener { get { return (GameNamespaceAnyTestEvent3RemovedListenerComponent)GetComponent(GameComponentsLookup.GameNamespaceAnyTestEvent3RemovedListener); } }
+    public bool hasGameNamespaceAnyTestEvent3RemovedListener { get { return HasComponent(GameComponentsLookup.GameNamespaceAnyTestEvent3RemovedListener); } }
+
+    public void AddGameNamespaceAnyTestEvent3RemovedListener(System.Collections.Generic.List<INamespaceAnyTestEvent3RemovedListener> newValue)
+    {
+        var index = GameComponentsLookup.GameNamespaceAnyTestEvent3RemovedListener;
+        var component = (GameNamespaceAnyTestEvent3RemovedListenerComponent)CreateComponent(index, typeof(GameNamespaceAnyTestEvent3RemovedListenerComponent));
+        component.value = newValue;
+        AddComponent(index, component);
+    }
+
+    public void ReplaceGameNamespaceAnyTestEvent3RemovedListener(System.Collections.Generic.List<INamespaceAnyTestEvent3RemovedListener> newValue)
+    {
+        var index = GameComponentsLookup.GameNamespaceAnyTestEvent3RemovedListener;
+        var component = (GameNamespaceAnyTestEvent3RemovedListenerComponent)CreateComponent(index, typeof(GameNamespaceAnyTestEvent3RemovedListenerComponent));
+        component.value = newValue;
+        ReplaceComponent(index, component);
+    }
+
+    public void RemoveGameNamespaceAnyTestEvent3RemovedListener()
+    {
+        RemoveComponent(GameComponentsLookup.GameNamespaceAnyTestEvent3RemovedListener);
+    }
+}
+
+public sealed partial class GameMatcher
+{
+    static Entitas.IMatcher<GameEntity> _matcherGameNamespaceAnyTestEvent3RemovedListener;
+
+    public static Entitas.IMatcher<GameEntity> GameNamespaceAnyTestEvent3RemovedListener
+    {
+        get
+        {
+            if (_matcherGameNamespaceAnyTestEvent3RemovedListener == null)
+            {
+                var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.GameNamespaceAnyTestEvent3RemovedListener);
+                matcher.componentNames = GameComponentsLookup.componentNames;
+                _matcherGameNamespaceAnyTestEvent3RemovedListener = matcher;
+            }
+
+            return _matcherGameNamespaceAnyTestEvent3RemovedListener;
+        }
+    }
+}
+
+
+// GameGameNamespaceAnyTestEvent3RemovedListenerComponentEvent.g.cs
 public partial class GameEntity
 {
     public void AddGameNamespaceAnyTestEvent3RemovedListener(IGameNamespaceAnyTestEvent3RemovedListener value)
@@ -403,6 +599,55 @@ public sealed partial class GameMatcher
 // GameNamespaceAnyTestEvent2ListenerComponent.g.cs
 public partial class GameEntity
 {
+    public NamespaceAnyTestEvent2ListenerComponent namespaceAnyTestEvent2Listener { get { return (NamespaceAnyTestEvent2ListenerComponent)GetComponent(GameComponentsLookup.NamespaceAnyTestEvent2Listener); } }
+    public bool hasNamespaceAnyTestEvent2Listener { get { return HasComponent(GameComponentsLookup.NamespaceAnyTestEvent2Listener); } }
+
+    public void AddNamespaceAnyTestEvent2Listener(System.Collections.Generic.List<INamespaceAnyTestEvent2Listener> newValue)
+    {
+        var index = GameComponentsLookup.NamespaceAnyTestEvent2Listener;
+        var component = (NamespaceAnyTestEvent2ListenerComponent)CreateComponent(index, typeof(NamespaceAnyTestEvent2ListenerComponent));
+        component.value = newValue;
+        AddComponent(index, component);
+    }
+
+    public void ReplaceNamespaceAnyTestEvent2Listener(System.Collections.Generic.List<INamespaceAnyTestEvent2Listener> newValue)
+    {
+        var index = GameComponentsLookup.NamespaceAnyTestEvent2Listener;
+        var component = (NamespaceAnyTestEvent2ListenerComponent)CreateComponent(index, typeof(NamespaceAnyTestEvent2ListenerComponent));
+        component.value = newValue;
+        ReplaceComponent(index, component);
+    }
+
+    public void RemoveNamespaceAnyTestEvent2Listener()
+    {
+        RemoveComponent(GameComponentsLookup.NamespaceAnyTestEvent2Listener);
+    }
+}
+
+public sealed partial class GameMatcher
+{
+    static Entitas.IMatcher<GameEntity> _matcherNamespaceAnyTestEvent2Listener;
+
+    public static Entitas.IMatcher<GameEntity> NamespaceAnyTestEvent2Listener
+    {
+        get
+        {
+            if (_matcherNamespaceAnyTestEvent2Listener == null)
+            {
+                var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.NamespaceAnyTestEvent2Listener);
+                matcher.componentNames = GameComponentsLookup.componentNames;
+                _matcherNamespaceAnyTestEvent2Listener = matcher;
+            }
+
+            return _matcherNamespaceAnyTestEvent2Listener;
+        }
+    }
+}
+
+
+// GameNamespaceAnyTestEvent2ListenerComponentEvent.g.cs
+public partial class GameEntity
+{
     public void AddNamespaceAnyTestEvent2Listener(INamespaceAnyTestEvent2Listener value)
     {
         var listeners = hasNamespaceAnyTestEvent2Listener
@@ -429,6 +674,55 @@ public partial class GameEntity
 
 
 // GameNamespaceAnyTestEvent2RemovedListenerComponent.g.cs
+public partial class GameEntity
+{
+    public NamespaceAnyTestEvent2RemovedListenerComponent namespaceAnyTestEvent2RemovedListener { get { return (NamespaceAnyTestEvent2RemovedListenerComponent)GetComponent(GameComponentsLookup.NamespaceAnyTestEvent2RemovedListener); } }
+    public bool hasNamespaceAnyTestEvent2RemovedListener { get { return HasComponent(GameComponentsLookup.NamespaceAnyTestEvent2RemovedListener); } }
+
+    public void AddNamespaceAnyTestEvent2RemovedListener(System.Collections.Generic.List<INamespaceAnyTestEvent2RemovedListener> newValue)
+    {
+        var index = GameComponentsLookup.NamespaceAnyTestEvent2RemovedListener;
+        var component = (NamespaceAnyTestEvent2RemovedListenerComponent)CreateComponent(index, typeof(NamespaceAnyTestEvent2RemovedListenerComponent));
+        component.value = newValue;
+        AddComponent(index, component);
+    }
+
+    public void ReplaceNamespaceAnyTestEvent2RemovedListener(System.Collections.Generic.List<INamespaceAnyTestEvent2RemovedListener> newValue)
+    {
+        var index = GameComponentsLookup.NamespaceAnyTestEvent2RemovedListener;
+        var component = (NamespaceAnyTestEvent2RemovedListenerComponent)CreateComponent(index, typeof(NamespaceAnyTestEvent2RemovedListenerComponent));
+        component.value = newValue;
+        ReplaceComponent(index, component);
+    }
+
+    public void RemoveNamespaceAnyTestEvent2RemovedListener()
+    {
+        RemoveComponent(GameComponentsLookup.NamespaceAnyTestEvent2RemovedListener);
+    }
+}
+
+public sealed partial class GameMatcher
+{
+    static Entitas.IMatcher<GameEntity> _matcherNamespaceAnyTestEvent2RemovedListener;
+
+    public static Entitas.IMatcher<GameEntity> NamespaceAnyTestEvent2RemovedListener
+    {
+        get
+        {
+            if (_matcherNamespaceAnyTestEvent2RemovedListener == null)
+            {
+                var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.NamespaceAnyTestEvent2RemovedListener);
+                matcher.componentNames = GameComponentsLookup.componentNames;
+                _matcherNamespaceAnyTestEvent2RemovedListener = matcher;
+            }
+
+            return _matcherNamespaceAnyTestEvent2RemovedListener;
+        }
+    }
+}
+
+
+// GameNamespaceAnyTestEvent2RemovedListenerComponentEvent.g.cs
 public partial class GameEntity
 {
     public void AddNamespaceAnyTestEvent2RemovedListener(INamespaceAnyTestEvent2RemovedListener value)
@@ -502,7 +796,7 @@ public sealed class GameNamespaceAnyTestEvent3EventSystem : Entitas.ReactiveSyst
 
 
 // GameNamespaceAnyTestEvent3ListenerComponent.g.cs
-[Entitas.CodeGeneration.Attributes.DontGenerate(false)]
+[Entitas.CodeGeneration.Attributes.DontGenerate]
 public sealed class GameNamespaceAnyTestEvent3ListenerComponent : Entitas.IComponent
 {
     public System.Collections.Generic.List<IGameNamespaceAnyTestEvent3Listener> value;
@@ -555,7 +849,7 @@ public sealed class GameNamespaceAnyTestEvent3RemovedEventSystem : Entitas.React
 
 
 // GameNamespaceAnyTestEvent3RemovedListenerComponent.g.cs
-[Entitas.CodeGeneration.Attributes.DontGenerate(false)]
+[Entitas.CodeGeneration.Attributes.DontGenerate]
 public sealed class GameNamespaceAnyTestEvent3RemovedListenerComponent : Entitas.IComponent
 {
     public System.Collections.Generic.List<IGameNamespaceAnyTestEvent3RemovedListener> value;
@@ -712,6 +1006,55 @@ public sealed partial class GameMatcher
 // GameTestEventListenerComponent.g.cs
 public partial class GameEntity
 {
+    public TestEventListenerComponent testEventListener { get { return (TestEventListenerComponent)GetComponent(GameComponentsLookup.TestEventListener); } }
+    public bool hasTestEventListener { get { return HasComponent(GameComponentsLookup.TestEventListener); } }
+
+    public void AddTestEventListener(System.Collections.Generic.List<ITestEventListener> newValue)
+    {
+        var index = GameComponentsLookup.TestEventListener;
+        var component = (TestEventListenerComponent)CreateComponent(index, typeof(TestEventListenerComponent));
+        component.value = newValue;
+        AddComponent(index, component);
+    }
+
+    public void ReplaceTestEventListener(System.Collections.Generic.List<ITestEventListener> newValue)
+    {
+        var index = GameComponentsLookup.TestEventListener;
+        var component = (TestEventListenerComponent)CreateComponent(index, typeof(TestEventListenerComponent));
+        component.value = newValue;
+        ReplaceComponent(index, component);
+    }
+
+    public void RemoveTestEventListener()
+    {
+        RemoveComponent(GameComponentsLookup.TestEventListener);
+    }
+}
+
+public sealed partial class GameMatcher
+{
+    static Entitas.IMatcher<GameEntity> _matcherTestEventListener;
+
+    public static Entitas.IMatcher<GameEntity> TestEventListener
+    {
+        get
+        {
+            if (_matcherTestEventListener == null)
+            {
+                var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.TestEventListener);
+                matcher.componentNames = GameComponentsLookup.componentNames;
+                _matcherTestEventListener = matcher;
+            }
+
+            return _matcherTestEventListener;
+        }
+    }
+}
+
+
+// GameTestEventListenerComponentEvent.g.cs
+public partial class GameEntity
+{
     public void AddTestEventListener(ITestEventListener value)
     {
         var listeners = hasTestEventListener
@@ -738,6 +1081,55 @@ public partial class GameEntity
 
 
 // GameTestEventRemovedListenerComponent.g.cs
+public partial class GameEntity
+{
+    public TestEventRemovedListenerComponent testEventRemovedListener { get { return (TestEventRemovedListenerComponent)GetComponent(GameComponentsLookup.TestEventRemovedListener); } }
+    public bool hasTestEventRemovedListener { get { return HasComponent(GameComponentsLookup.TestEventRemovedListener); } }
+
+    public void AddTestEventRemovedListener(System.Collections.Generic.List<ITestEventRemovedListener> newValue)
+    {
+        var index = GameComponentsLookup.TestEventRemovedListener;
+        var component = (TestEventRemovedListenerComponent)CreateComponent(index, typeof(TestEventRemovedListenerComponent));
+        component.value = newValue;
+        AddComponent(index, component);
+    }
+
+    public void ReplaceTestEventRemovedListener(System.Collections.Generic.List<ITestEventRemovedListener> newValue)
+    {
+        var index = GameComponentsLookup.TestEventRemovedListener;
+        var component = (TestEventRemovedListenerComponent)CreateComponent(index, typeof(TestEventRemovedListenerComponent));
+        component.value = newValue;
+        ReplaceComponent(index, component);
+    }
+
+    public void RemoveTestEventRemovedListener()
+    {
+        RemoveComponent(GameComponentsLookup.TestEventRemovedListener);
+    }
+}
+
+public sealed partial class GameMatcher
+{
+    static Entitas.IMatcher<GameEntity> _matcherTestEventRemovedListener;
+
+    public static Entitas.IMatcher<GameEntity> TestEventRemovedListener
+    {
+        get
+        {
+            if (_matcherTestEventRemovedListener == null)
+            {
+                var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.TestEventRemovedListener);
+                matcher.componentNames = GameComponentsLookup.componentNames;
+                _matcherTestEventRemovedListener = matcher;
+            }
+
+            return _matcherTestEventRemovedListener;
+        }
+    }
+}
+
+
+// GameTestEventRemovedListenerComponentEvent.g.cs
 public partial class GameEntity
 {
     public void AddTestEventRemovedListener(ITestEventRemovedListener value)
@@ -918,6 +1310,55 @@ public sealed class InputEventSystems : Feature
 // InputInputNamespaceAnyTestEvent3ListenerComponent.g.cs
 public partial class InputEntity
 {
+    public InputNamespaceAnyTestEvent3ListenerComponent inputNamespaceAnyTestEvent3Listener { get { return (InputNamespaceAnyTestEvent3ListenerComponent)GetComponent(InputComponentsLookup.InputNamespaceAnyTestEvent3Listener); } }
+    public bool hasInputNamespaceAnyTestEvent3Listener { get { return HasComponent(InputComponentsLookup.InputNamespaceAnyTestEvent3Listener); } }
+
+    public void AddInputNamespaceAnyTestEvent3Listener(System.Collections.Generic.List<INamespaceAnyTestEvent3Listener> newValue)
+    {
+        var index = InputComponentsLookup.InputNamespaceAnyTestEvent3Listener;
+        var component = (InputNamespaceAnyTestEvent3ListenerComponent)CreateComponent(index, typeof(InputNamespaceAnyTestEvent3ListenerComponent));
+        component.value = newValue;
+        AddComponent(index, component);
+    }
+
+    public void ReplaceInputNamespaceAnyTestEvent3Listener(System.Collections.Generic.List<INamespaceAnyTestEvent3Listener> newValue)
+    {
+        var index = InputComponentsLookup.InputNamespaceAnyTestEvent3Listener;
+        var component = (InputNamespaceAnyTestEvent3ListenerComponent)CreateComponent(index, typeof(InputNamespaceAnyTestEvent3ListenerComponent));
+        component.value = newValue;
+        ReplaceComponent(index, component);
+    }
+
+    public void RemoveInputNamespaceAnyTestEvent3Listener()
+    {
+        RemoveComponent(InputComponentsLookup.InputNamespaceAnyTestEvent3Listener);
+    }
+}
+
+public sealed partial class InputMatcher
+{
+    static Entitas.IMatcher<InputEntity> _matcherInputNamespaceAnyTestEvent3Listener;
+
+    public static Entitas.IMatcher<InputEntity> InputNamespaceAnyTestEvent3Listener
+    {
+        get
+        {
+            if (_matcherInputNamespaceAnyTestEvent3Listener == null)
+            {
+                var matcher = (Entitas.Matcher<InputEntity>)Entitas.Matcher<InputEntity>.AllOf(InputComponentsLookup.InputNamespaceAnyTestEvent3Listener);
+                matcher.componentNames = InputComponentsLookup.componentNames;
+                _matcherInputNamespaceAnyTestEvent3Listener = matcher;
+            }
+
+            return _matcherInputNamespaceAnyTestEvent3Listener;
+        }
+    }
+}
+
+
+// InputInputNamespaceAnyTestEvent3ListenerComponentEvent.g.cs
+public partial class InputEntity
+{
     public void AddInputNamespaceAnyTestEvent3Listener(IInputNamespaceAnyTestEvent3Listener value)
     {
         var listeners = hasInputNamespaceAnyTestEvent3Listener
@@ -944,6 +1385,55 @@ public partial class InputEntity
 
 
 // InputInputNamespaceAnyTestEvent3RemovedListenerComponent.g.cs
+public partial class InputEntity
+{
+    public InputNamespaceAnyTestEvent3RemovedListenerComponent inputNamespaceAnyTestEvent3RemovedListener { get { return (InputNamespaceAnyTestEvent3RemovedListenerComponent)GetComponent(InputComponentsLookup.InputNamespaceAnyTestEvent3RemovedListener); } }
+    public bool hasInputNamespaceAnyTestEvent3RemovedListener { get { return HasComponent(InputComponentsLookup.InputNamespaceAnyTestEvent3RemovedListener); } }
+
+    public void AddInputNamespaceAnyTestEvent3RemovedListener(System.Collections.Generic.List<INamespaceAnyTestEvent3RemovedListener> newValue)
+    {
+        var index = InputComponentsLookup.InputNamespaceAnyTestEvent3RemovedListener;
+        var component = (InputNamespaceAnyTestEvent3RemovedListenerComponent)CreateComponent(index, typeof(InputNamespaceAnyTestEvent3RemovedListenerComponent));
+        component.value = newValue;
+        AddComponent(index, component);
+    }
+
+    public void ReplaceInputNamespaceAnyTestEvent3RemovedListener(System.Collections.Generic.List<INamespaceAnyTestEvent3RemovedListener> newValue)
+    {
+        var index = InputComponentsLookup.InputNamespaceAnyTestEvent3RemovedListener;
+        var component = (InputNamespaceAnyTestEvent3RemovedListenerComponent)CreateComponent(index, typeof(InputNamespaceAnyTestEvent3RemovedListenerComponent));
+        component.value = newValue;
+        ReplaceComponent(index, component);
+    }
+
+    public void RemoveInputNamespaceAnyTestEvent3RemovedListener()
+    {
+        RemoveComponent(InputComponentsLookup.InputNamespaceAnyTestEvent3RemovedListener);
+    }
+}
+
+public sealed partial class InputMatcher
+{
+    static Entitas.IMatcher<InputEntity> _matcherInputNamespaceAnyTestEvent3RemovedListener;
+
+    public static Entitas.IMatcher<InputEntity> InputNamespaceAnyTestEvent3RemovedListener
+    {
+        get
+        {
+            if (_matcherInputNamespaceAnyTestEvent3RemovedListener == null)
+            {
+                var matcher = (Entitas.Matcher<InputEntity>)Entitas.Matcher<InputEntity>.AllOf(InputComponentsLookup.InputNamespaceAnyTestEvent3RemovedListener);
+                matcher.componentNames = InputComponentsLookup.componentNames;
+                _matcherInputNamespaceAnyTestEvent3RemovedListener = matcher;
+            }
+
+            return _matcherInputNamespaceAnyTestEvent3RemovedListener;
+        }
+    }
+}
+
+
+// InputInputNamespaceAnyTestEvent3RemovedListenerComponentEvent.g.cs
 public partial class InputEntity
 {
     public void AddInputNamespaceAnyTestEvent3RemovedListener(IInputNamespaceAnyTestEvent3RemovedListener value)
@@ -1042,7 +1532,7 @@ public sealed class InputNamespaceAnyTestEvent3EventSystem : Entitas.ReactiveSys
 
 
 // InputNamespaceAnyTestEvent3ListenerComponent.g.cs
-[Entitas.CodeGeneration.Attributes.DontGenerate(false)]
+[Entitas.CodeGeneration.Attributes.DontGenerate]
 public sealed class InputNamespaceAnyTestEvent3ListenerComponent : Entitas.IComponent
 {
     public System.Collections.Generic.List<IInputNamespaceAnyTestEvent3Listener> value;
@@ -1095,7 +1585,7 @@ public sealed class InputNamespaceAnyTestEvent3RemovedEventSystem : Entitas.Reac
 
 
 // InputNamespaceAnyTestEvent3RemovedListenerComponent.g.cs
-[Entitas.CodeGeneration.Attributes.DontGenerate(false)]
+[Entitas.CodeGeneration.Attributes.DontGenerate]
 public sealed class InputNamespaceAnyTestEvent3RemovedListenerComponent : Entitas.IComponent
 {
     public System.Collections.Generic.List<IInputNamespaceAnyTestEvent3RemovedListener> value;
@@ -1211,7 +1701,7 @@ public sealed class NamespaceAnyTestEvent2EventSystem : Entitas.ReactiveSystem<G
 
 
 // NamespaceAnyTestEvent2ListenerComponent.g.cs
-[Entitas.CodeGeneration.Attributes.DontGenerate(false)]
+[Entitas.CodeGeneration.Attributes.DontGenerate]
 public sealed class NamespaceAnyTestEvent2ListenerComponent : Entitas.IComponent
 {
     public System.Collections.Generic.List<INamespaceAnyTestEvent2Listener> value;
@@ -1264,7 +1754,7 @@ public sealed class NamespaceAnyTestEvent2RemovedEventSystem : Entitas.ReactiveS
 
 
 // NamespaceAnyTestEvent2RemovedListenerComponent.g.cs
-[Entitas.CodeGeneration.Attributes.DontGenerate(false)]
+[Entitas.CodeGeneration.Attributes.DontGenerate]
 public sealed class NamespaceAnyTestEvent2RemovedListenerComponent : Entitas.IComponent
 {
     public System.Collections.Generic.List<INamespaceAnyTestEvent2RemovedListener> value;
@@ -1310,7 +1800,7 @@ public sealed class TestEventEventSystem : Entitas.ReactiveSystem<GameEntity>
 
 
 // TestEventListenerComponent.g.cs
-[Entitas.CodeGeneration.Attributes.DontGenerate(false)]
+[Entitas.CodeGeneration.Attributes.DontGenerate]
 public sealed class TestEventListenerComponent : Entitas.IComponent
 {
     public System.Collections.Generic.List<ITestEventListener> value;
@@ -1356,7 +1846,7 @@ public sealed class TestEventRemovedEventSystem : Entitas.ReactiveSystem<GameEnt
 
 
 // TestEventRemovedListenerComponent.g.cs
-[Entitas.CodeGeneration.Attributes.DontGenerate(false)]
+[Entitas.CodeGeneration.Attributes.DontGenerate]
 public sealed class TestEventRemovedListenerComponent : Entitas.IComponent
 {
     public System.Collections.Generic.List<ITestEventRemovedListener> value;

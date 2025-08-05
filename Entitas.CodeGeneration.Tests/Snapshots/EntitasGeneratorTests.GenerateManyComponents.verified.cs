@@ -633,17 +633,17 @@ public partial class Contexts : Entitas.IContexts
 
     static Contexts _sharedInstance;
 
-    public GameContext Game { get; set; }
-    public InputContext Input { get; set; }
-    public AudioContext Audio { get; set; }
+    public GameContext game { get; set; }
+    public InputContext input { get; set; }
+    public AudioContext audio { get; set; }
 
-    public Entitas.IContext[] allContexts { get { return new Entitas.IContext [] { Game, Input, Audio }; } }
+    public Entitas.IContext[] allContexts { get { return new Entitas.IContext [] { game, input, audio }; } }
 
     public Contexts()
     {
-        Game = new GameContext();
-        Input = new InputContext();
-        Audio = new AudioContext();
+        game = new GameContext();
+        input = new InputContext();
+        audio = new AudioContext();
 
         var postConstructors = System.Linq.Enumerable.Where(
             GetType().GetMethods(),

@@ -17,15 +17,15 @@ public partial class Contexts : Entitas.IContexts
 
     static Contexts _sharedInstance;
 
-    public GameContext Game { get; set; }
-    public InputContext Input { get; set; }
+    public GameContext game { get; set; }
+    public InputContext input { get; set; }
 
-    public Entitas.IContext[] allContexts { get { return new Entitas.IContext [] { Game, Input }; } }
+    public Entitas.IContext[] allContexts { get { return new Entitas.IContext [] { game, input }; } }
 
     public Contexts()
     {
-        Game = new GameContext();
-        Input = new InputContext();
+        game = new GameContext();
+        input = new InputContext();
 
         var postConstructors = System.Linq.Enumerable.Where(
             GetType().GetMethods(),

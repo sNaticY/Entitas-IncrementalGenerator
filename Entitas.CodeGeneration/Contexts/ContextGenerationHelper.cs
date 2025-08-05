@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Text;
 using Entitas.CodeGeneration.Components;
 using Entitas.CodeGeneration.Contexts.Data;
+using Entitas.CodeGeneration.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
@@ -110,16 +111,16 @@ public static class ContextGenerationHelper
     {
         var contextList = string.Join(", ", contextsData
             .Select(contextData => ContextTemplates.ContextListTemplate
-                .Replace("${contextName}", contextData.ContextName)));
+                .Replace("${contextName}", contextData.ContextName.ToLowerFirst())));
 
         var contextPropertyList = string.Join("\n", contextsData
             .Select(contextData => ContextTemplates.ContextPropertyTemplate
-                .Replace("${contextName}", contextData.ContextName)
+                .Replace("${contextName}", contextData.ContextName.ToLowerFirst())
                 .Replace("${ContextType}", contextData.ContextTypeName)));
 
         var contextAssignmentList = string.Join("\n", contextsData
             .Select(contextData => ContextTemplates.ContextAssignmentTemplate
-                .Replace("${contextName}", contextData.ContextName)
+                .Replace("${contextName}", contextData.ContextName.ToLowerFirst())
                 .Replace("${ContextType}", contextData.ContextTypeName)));
 
         var generatedSource = ContextTemplates.ContextsTemplate

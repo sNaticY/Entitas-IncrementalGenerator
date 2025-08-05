@@ -8,7 +8,7 @@ namespace Entitas.CodeGeneration.Components;
 public static class ComponentTemplates
 {
     public const string GeneratedComponentTemplate =
-        @"[Entitas.CodeGeneration.Attributes.DontGenerate(false)]
+        @"[Entitas.CodeGeneration.Attributes.DontGenerate]
 public sealed class ${FullComponentName} : Entitas.IComponent
 {
     public ${Type} value;
@@ -117,7 +117,7 @@ public sealed class ${FullComponentName} : Entitas.IComponent
             .Replace("${ComponentName}", componentName)
             .Replace("${componentName}", componentNameLower)
             .Replace("${MatcherType}", contextData.MatcherTypeName)
-            .Replace("${PrefixedComponentName}", componentData.PrefixedComponentName());
+            .Replace("${prefixedComponentName}", componentData.PrefixedComponentName());
     }
     
     const string StandardComponentEntityApiTemplate =

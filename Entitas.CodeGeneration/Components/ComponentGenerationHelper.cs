@@ -44,7 +44,6 @@ public static class ComponentGenerationHelper
         return declaredComponentsData.Select(static (originalComponents, _) => 
         {
             var builder = ImmutableArray.CreateBuilder<ComponentData>(originalComponents.Length);
-
             builder.AddRange(originalComponents);
 
             // Add generated components (ex: events)

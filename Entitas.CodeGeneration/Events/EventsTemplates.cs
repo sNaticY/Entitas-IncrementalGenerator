@@ -31,7 +31,7 @@ public static class EventsTemplates
 ";
     
     public const string EventListenerComponentTemplate =
-        @"[Entitas.CodeGeneration.Attributes.DontGenerate(false)]
+        @"[Entitas.CodeGeneration.Attributes.DontGenerate]
 public sealed class ${EventListenerComponent} : Entitas.IComponent
 {
     public System.Collections.Generic.List<I${EventListener}> value;

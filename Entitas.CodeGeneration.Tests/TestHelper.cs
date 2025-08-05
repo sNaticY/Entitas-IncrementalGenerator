@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Entitas;
 using Entitas.CodeGeneration.Attributes;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
