@@ -14,31 +14,29 @@ Limitations:
 - Not supported: Generation of components from non-components classes (when tagging any class with a ContextAttribute).
   - It's quick enough to write a component instead.
 - No custom config is passed to the generator:
-  - No more Jenny.properties.. so contexts must be defined in code (see Usage section).
-  - "Assembly-CSharp" is hardcoded in EntitasGenerator.cs
+  - No more Jenny.properties.. so contexts must be defined in code (see Setup section).
+  - "Assembly-CSharp" is hardcoded as the main assembly in EntitasGenerator.cs
   - Default Context name is "Game" (when you don't specify the context on a component, it goes to the default context - Game).
 - Generation is not supported across multiple assemblies (due to 'partial' usage in Entities and Contexts)
 
 Setup:
-- Build the solution
-- Place Entitas.CodeGeneration.dll and Entitas.CodeGeneration.Attributes.dll somewhere within Assembly-CSharp.
-- For Entitas.CodeGeneration.dll, follow the Unity documentation: https://docs.unity3d.com/6000.1/Documentation/Manual/create-source-generator.html
-    - Under <b>Select platforms for plugin</b>, disable <b>Any Platform</b>.
+- Build the solution (typically in Release configuration)
+- Copy <b>Entitas.CodeGeneration.dll</b> and <b>Entitas.CodeGeneration.Attributes.dll</b> in your Unity project.
+  - Note: Entitas.CodeGeneration.dll must be in Assembly-CSharp.
+- To allow Entitas.CodeGeneration.dll to work in Unity, follow the documentation: https://docs.unity3d.com/6000.1/Documentation/Manual/create-source-generator.html
+    - (In the inspector) Under <b>Select platforms for plugin</b>, disable <b>Any Platform</b>.
     - Under <b>Include Platforms</b>, disable <b>Editor</b> and <b>Standalone</b>.
     - Under <b>Asset Labels</b>, click on the label icon to open the Asset labels sub-menu. Create and assign a new label called <b>RoslynAnalyzer</b>.
-
-Usage:
-- Define the Game Context attribute (it's the default context) as follow:
+- <b>Mandatory:</b> Define at least one context attribute. I recommend writing a 'Game' ContextAttribute (it's the default context), as follow:
 ```
-using Entitas;
-using Entitas.CodeGeneration.Attributes;
-
 public sealed class GameAttribute : Entitas.CodeGeneration.Attributes.ContextAttribute
 {
     public GameAttribute() : base("Game") {}
 }
 ```
-- Then, write a component as usual
+
+Usage: 
+- Write a component as usual
 ```
 public class TestComponent : IComponent
 {
