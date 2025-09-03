@@ -281,4 +281,19 @@ namespace Namespace
     }
 }
 ";
+
+    public const string SimpleEventTestSource = @"
+using Entitas;
+using Entitas.CodeGeneration.Attributes;
+
+public sealed class GameAttribute : Entitas.CodeGeneration.Attributes.ContextAttribute
+{
+    public GameAttribute() : base(""Game"") {}
+}
+
+[Event(EventTarget.Self)]
+public class TestEventComponent : IComponent
+{
+}
+";
 }

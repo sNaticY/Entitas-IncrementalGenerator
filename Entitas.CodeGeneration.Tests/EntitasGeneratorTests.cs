@@ -109,4 +109,10 @@ public class TestMember99Component : IComponent
     {
         return TestHelper.Verify(TestSources.EventsTestSource, _output);
     }
+    
+    [Fact]
+    public Task GenerateSimpleEvent()
+    {
+        return TestHelper.Verify(TestSources.SimpleEventTestSource, _output);
+    }
 }
