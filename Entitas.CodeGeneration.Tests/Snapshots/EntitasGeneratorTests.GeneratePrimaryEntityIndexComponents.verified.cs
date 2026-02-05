@@ -61,17 +61,20 @@ public sealed class GameCleanupSystems : Feature
 public static class GameComponentsLookup
 {
     public const int TestMember = 0;
+    public const int TestMember2 = 1;
 
-    public const int TotalComponents = 1;
+    public const int TotalComponents = 2;
 
     public static readonly string[] componentNames = 
     {
-        "TestMember"
+        "TestMember",
+        "TestMember2"
     };
 
     public static readonly System.Type[] componentTypes = 
     {
-        typeof(TestMemberComponent)
+        typeof(TestMemberComponent),
+        typeof(TestMember2Component)
     };
 }
 
@@ -108,6 +111,39 @@ public sealed partial class GameEntity : Entitas.Entity
 }
 
 
+// GameEntityIndices.g.cs
+public partial class Contexts
+{
+    public const string TestMember = "TestMember";
+    public const string TestMember2 = "TestMember2";
+
+
+    [Entitas.CodeGeneration.Attributes.PostConstructor]
+    public void InitializeEntityIndices()
+    {
+        game.AddEntityIndex(new Entitas.PrimaryEntityIndex<GameEntity, string>(
+            TestMember,
+            game.GetGroup(GameMatcher.TestMember),
+            (e, c) => ((TestMemberComponent)c).Value));
+
+        game.AddEntityIndex(new Entitas.PrimaryEntityIndex<GameEntity, string>(
+            TestMember2,
+            game.GetGroup(GameMatcher.TestMember2),
+            (e, c) => ((TestMember2Component)c).Value));
+    }
+}
+
+public static class ContextsExtensions
+{
+    public static GameEntity GetEntityWithTestMember(this GameContext context, string Value) {
+        return ((Entitas.PrimaryEntityIndex<GameEntity, string>)context.GetEntityIndex(Contexts.TestMember)).GetEntity(Value);
+    }
+
+    public static GameEntity GetEntityWithTestMember2(this GameContext context, string Value) {
+        return ((Entitas.PrimaryEntityIndex<GameEntity, string>)context.GetEntityIndex(Contexts.TestMember2)).GetEntity(Value);
+    }
+}
+
 // GameEventSystems.g.cs
 public sealed class GameEventSystems : Feature
 {
@@ -139,6 +175,55 @@ public sealed partial class GameMatcher
     public static Entitas.IAnyOfMatcher<GameEntity> AnyOf(params Entitas.IMatcher<GameEntity>[] matchers)
     {
         return Entitas.Matcher<GameEntity>.AnyOf(matchers);
+    }
+}
+
+
+// GameTestMember2Component.g.cs
+public partial class GameEntity
+{
+    public TestMember2Component testMember2 { get { return (TestMember2Component)GetComponent(GameComponentsLookup.TestMember2); } }
+    public bool hasTestMember2 { get { return HasComponent(GameComponentsLookup.TestMember2); } }
+
+    public void AddTestMember2(string newValue)
+    {
+        var index = GameComponentsLookup.TestMember2;
+        var component = (TestMember2Component)CreateComponent(index, typeof(TestMember2Component));
+        component.Value = newValue;
+        AddComponent(index, component);
+    }
+
+    public void ReplaceTestMember2(string newValue)
+    {
+        var index = GameComponentsLookup.TestMember2;
+        var component = (TestMember2Component)CreateComponent(index, typeof(TestMember2Component));
+        component.Value = newValue;
+        ReplaceComponent(index, component);
+    }
+
+    public void RemoveTestMember2()
+    {
+        RemoveComponent(GameComponentsLookup.TestMember2);
+    }
+}
+
+public sealed partial class GameMatcher
+{
+    static Entitas.IMatcher<GameEntity> _matcherTestMember2;
+
+    public static Entitas.IMatcher<GameEntity> TestMember2
+    {
+        get
+        {
+            if (_matcherTestMember2 == null)
+            {
+                var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.TestMember2);
+                matcher.componentNames = GameComponentsLookup.componentNames;
+                _matcherTestMember2 = matcher;
+            }
+
+            return _matcherTestMember2;
+        }
     }
 }
 

@@ -210,6 +210,12 @@ public class TestMemberComponent : IComponent
     [PrimaryEntityIndex]
     public string Value;
 }
+
+public class TestMember2Component : IComponent
+{
+    [PrimaryEntityIndex]
+    public string Value;
+}
 ";
     
     public const string DestroyComponentCleanupSystemTestSource = @"
