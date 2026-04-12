@@ -9,21 +9,52 @@ using Entitas.CodeGeneration.EntityIndex;
 using Entitas.CodeGeneration.Events;
 using Entitas.CodeGeneration.VisualDebugging;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Entitas.CodeGeneration;
 
 [Generator]
 public class EntitasGenerator : IIncrementalGenerator
 {
-    const string MainAssembly = "Assembly-CSharp"; // TODO: Add config (in .editorconfig?)
+    /// <summary>
+    /// Default Unity main assembly name used when <see cref="AssembliesConfigKey"/> is not set.
+    /// </summary>
+    const string DefaultMainAssembly = "Assembly-CSharp";
+
+    /// <summary>
+    /// Internal test assembly; always allowed to run regardless of configuration.
+    /// </summary>
     const string TestsAssembly = "Entitas.CodeGeneration-Tests";
+
+    /// <summary>
+    /// MSBuild / .editorconfig key used to configure the list of assembly names for which
+    /// Entitas code generation should run.
+    ///
+    /// Set it in your .editorconfig (global section) or in a Directory.Build.props file:
+    ///   is_global = true
+    ///   build_property.EntitasAssemblies = Assembly-CSharp, MyGameplay, MyUI
+    ///
+    /// When not set, defaults to "Assembly-CSharp".
+    /// Multiple assembly names must be separated by commas or semicolons.
+    /// </summary>
+    public const string AssembliesConfigKey = "build_property.EntitasAssemblies";
     
     const bool VisualDebuggingGenerationEnabled = true; // TODO: Add config (in .editorconfig?)
     
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var shouldRun = context.CompilationProvider.Select(static (compilation, _) 
-            => compilation.AssemblyName is MainAssembly or TestsAssembly);
+        var configuredAssemblies = GetConfiguredAssemblies(context.AnalyzerConfigOptionsProvider);
+
+        var shouldRun = context.CompilationProvider
+            .Combine(configuredAssemblies)
+            .Select(static (pair, _) =>
+            {
+                var assemblyName = pair.Left.AssemblyName;
+                // Always allow the internal test assembly
+                if (assemblyName == TestsAssembly)
+                    return true;
+                return pair.Right.Contains(assemblyName ?? string.Empty);
+            });
     
         var contextsData = ContextGenerationHelper.GetContextsData(context);
         RegisterContextsGeneration(context, shouldRun, contextsData);
@@ -34,7 +65,29 @@ public class EntitasGenerator : IIncrementalGenerator
         RegisterSharedSourcesGeneration(context, shouldRun, contextsData, componentsData, componentsByContextNameLookup);
 
         if (VisualDebuggingGenerationEnabled)
-            RegisterVisualDebuggingGeneration(context, contextsData);
+            RegisterVisualDebuggingGeneration(context, contextsData, configuredAssemblies);
+    }
+
+    static IncrementalValueProvider<ImmutableHashSet<string>> GetConfiguredAssemblies(
+        IncrementalValueProvider<AnalyzerConfigOptionsProvider> optionsProvider)
+    {
+        return optionsProvider.Select(static (options, _) =>
+        {
+            if (options.GlobalOptions.TryGetValue(AssembliesConfigKey, out var value)
+                && !string.IsNullOrWhiteSpace(value))
+            {
+                var assemblies = value
+                    .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(static a => a.Trim())
+                    .Where(static a => !string.IsNullOrEmpty(a))
+                    .ToImmutableHashSet(StringComparer.OrdinalIgnoreCase);
+
+                if (assemblies.Count > 0)
+                    return assemblies;
+            }
+
+            return ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, DefaultMainAssembly);
+        });
     }
 
     void RegisterContextsGeneration(
@@ -152,11 +205,17 @@ public class EntitasGenerator : IIncrementalGenerator
 
     void RegisterVisualDebuggingGeneration(
         IncrementalGeneratorInitializationContext context,
-        in IncrementalValueProvider<ImmutableArray<ContextData>> contextsData)
+        in IncrementalValueProvider<ImmutableArray<ContextData>> contextsData,
+        IncrementalValueProvider<ImmutableHashSet<string>> configuredAssemblies)
     {
         // skip for tests, to avoid bloating snapshots
-        var shouldRun = context.CompilationProvider.Select(static (compilation, _) 
-            => compilation.AssemblyName is MainAssembly /*or TestsAssembly*/);
+        var shouldRun = context.CompilationProvider
+            .Combine(configuredAssemblies)
+            .Select(static (pair, _) =>
+            {
+                var assemblyName = pair.Left.AssemblyName;
+                return pair.Right.Contains(assemblyName ?? string.Empty);
+            });
 
         var combinedInput = shouldRun.Combine(contextsData);
         context.RegisterSourceOutput(combinedInput, 

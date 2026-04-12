@@ -15,9 +15,25 @@ Limitations:
   - It's quick enough to write a component instead.
 - No custom config is passed to the generator:
   - No more Jenny.properties.. so contexts must be defined in code (see Setup section).
-  - "Assembly-CSharp" is hardcoded as the main assembly in EntitasGenerator.cs
+  - By default, code is generated only for the "Assembly-CSharp" Unity assembly. Use the `EntitasAssemblies` MSBuild property (see Configuration section) to add more assemblies.
   - Default Context name is "Game" (when you don't specify the context on a component, it goes to the default context - Game).
 - Generation is not supported across multiple assemblies (due to 'partial' usage in Entities and Contexts)
+  - Each assembly generates its own independent set of Contexts, Entities, and related code.
+
+Configuration:
+- To generate Entitas code for assemblies other than "Assembly-CSharp" (e.g. when using Unity Assembly Definition files), set the `EntitasAssemblies` MSBuild property in a global `.editorconfig` or `Directory.Build.props`:
+  ```
+  # .editorconfig (global section)
+  is_global = true
+  build_property.EntitasAssemblies = Assembly-CSharp, MyGameplay, MyUI
+  ```
+  or in `Directory.Build.props`:
+  ```xml
+  <PropertyGroup>
+    <EntitasAssemblies>Assembly-CSharp;MyGameplay;MyUI</EntitasAssemblies>
+  </PropertyGroup>
+  ```
+  Assembly names are separated by commas or semicolons. When not set, defaults to `Assembly-CSharp`.
 
 Setup:
 - Build the solution (typically in Release configuration)

@@ -115,4 +115,20 @@ public class TestMember99Component : IComponent
     {
         return TestHelper.Verify(TestSources.SimpleEventTestSource, _output);
     }
+
+    [Fact]
+    public Task GenerateForCustomAssembly()
+    {
+        // Generator should produce code when the assembly name is explicitly listed
+        // in the EntitasAssemblies build property.
+        var options = new Dictionary<string, string>
+        {
+            [EntitasGenerator.AssembliesConfigKey] = "MyGameplay"
+        };
+
+        return TestHelper.Verify(TestSources.SimpleComponentTestSource,
+            assemblyName: "MyGameplay",
+            _output,
+            globalOptions: options);
+    }
 }
