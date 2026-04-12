@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Entitas.CodeGeneration.Attributes;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Diagnostics;
 using VerifyXunit;
 using Xunit.Abstractions;
 
@@ -12,7 +13,9 @@ public static class TestHelper
     public delegate CSharpCompilation CompilationModifier(CSharpCompilation original);
     
     public static Task Verify(string source, ITestOutputHelper outputHelper, 
-        CompilationModifier? secondCompilationModifier = null)
+        CompilationModifier? secondCompilationModifier = null,
+        string assemblyName = "Entitas.CodeGeneration-Tests",
+        Dictionary<string, string>? analyzerConfigOptions = null)
     {
         // Parse the provided string into a C# syntax tree
         SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(source);
@@ -21,15 +24,26 @@ public static class TestHelper
         
         // Create a Roslyn compilation for the syntax tree.
         CSharpCompilation compilation = CSharpCompilation.Create(
-            assemblyName: "Entitas.CodeGeneration-Tests",
+            assemblyName: assemblyName,
             syntaxTrees: new[] { syntaxTree },
             references: references);
         
         // Create an instance of our generator incremental source generator
         var generator = new EntitasGenerator();
 
-        // The GeneratorDriver is used to run our generator against a compilation
-        GeneratorDriver driver = CSharpGeneratorDriver.Create(generator);
+        // Build the generator driver, optionally with analyzer config options
+        GeneratorDriver driver;
+        if (analyzerConfigOptions != null && analyzerConfigOptions.Count > 0)
+        {
+            var optionsProvider = new TestAnalyzerConfigOptionsProvider(analyzerConfigOptions);
+            driver = CSharpGeneratorDriver.Create(
+                generators: new[] { generator.AsSourceGenerator() },
+                optionsProvider: optionsProvider);
+        }
+        else
+        {
+            driver = CSharpGeneratorDriver.Create(generator);
+        }
 
         var sw = Stopwatch.StartNew();
         driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var updatedCompilation, out var diagnostics);
@@ -87,5 +101,46 @@ public static class TestHelper
         {
             references.Add(MetadataReference.CreateFromFile(typeLocation));
         }
+    }
+}
+
+/// <summary>
+/// A test implementation of <see cref="AnalyzerConfigOptionsProvider"/> that returns
+/// the provided global options for all files.
+/// </summary>
+class TestAnalyzerConfigOptionsProvider : AnalyzerConfigOptionsProvider
+{
+    readonly AnalyzerConfigOptions _globalOptions;
+
+    public TestAnalyzerConfigOptionsProvider(Dictionary<string, string> options)
+    {
+        _globalOptions = new TestAnalyzerConfigOptions(options);
+    }
+
+    public override AnalyzerConfigOptions GlobalOptions => _globalOptions;
+
+    public override AnalyzerConfigOptions GetOptions(SyntaxTree tree) => _globalOptions;
+
+    public override AnalyzerConfigOptions GetOptions(AdditionalText textFile) => _globalOptions;
+}
+
+class TestAnalyzerConfigOptions : AnalyzerConfigOptions
+{
+    readonly Dictionary<string, string> _options;
+
+    public TestAnalyzerConfigOptions(Dictionary<string, string> options)
+    {
+        _options = options;
+    }
+
+    public override bool TryGetValue(string key, out string value)
+    {
+        if (_options.TryGetValue(key, out var found))
+        {
+            value = found;
+            return true;
+        }
+        value = string.Empty;
+        return false;
     }
 }

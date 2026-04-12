@@ -15,7 +15,7 @@ Limitations:
   - It's quick enough to write a component instead.
 - No custom config is passed to the generator:
   - No more Jenny.properties.. so contexts must be defined in code (see Setup section).
-  - "Assembly-CSharp" is hardcoded as the main assembly in EntitasGenerator.cs
+  - "Assembly-CSharp" is hardcoded as the main assembly in EntitasGenerator.cs (configurable via MSBuild property, see Split Assembly section).
   - Default Context name is "Game" (when you don't specify the context on a component, it goes to the default context - Game).
 - Generation is not supported across multiple assemblies (due to 'partial' usage in Entities and Contexts)
 
@@ -44,3 +44,15 @@ public class TestComponent : IComponent
 }
 ```
 - After the compilation, you should magically be able to interact with this component on any GameEntity
+
+Split Assembly (optional):
+- By default, the generator only runs in the "Assembly-CSharp" assembly.
+- To enable the generator in additional assemblies (Unity assembly definitions / .asmdef), add an `EntitasTargetAssemblies` MSBuild property to your `.csproj` (or use an `.editorconfig`).
+- Example: in your Unity assembly definition's generated `.csproj`, or in a `Directory.Build.props` file:
+```xml
+<PropertyGroup>
+  <EntitasTargetAssemblies>Assembly-CSharp;MyGame.Gameplay;MyGame.Audio</EntitasTargetAssemblies>
+</PropertyGroup>
+```
+- The generator will then run in each listed assembly independently, generating code only for the components defined in that assembly.
+- Each assembly should define its own context attributes and components — the generator processes them per-assembly.

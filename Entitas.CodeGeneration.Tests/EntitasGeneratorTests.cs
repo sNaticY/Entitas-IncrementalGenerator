@@ -115,4 +115,18 @@ public class TestMember99Component : IComponent
     {
         return TestHelper.Verify(TestSources.SimpleEventTestSource, _output);
     }
+
+    [Fact]
+    public Task GenerateForSplitAssembly()
+    {
+        // Simulate a user-defined split assembly (e.g. MyGame.Audio)
+        // by setting build_property.EntitasTargetAssemblies to include it
+        return TestHelper.Verify(
+            TestSources.SimpleComponentTestSource, _output,
+            assemblyName: "MyGame.Audio",
+            analyzerConfigOptions: new Dictionary<string, string>
+            {
+                [EntitasGenerator.TargetAssembliesPropertyKey] = "Assembly-CSharp,MyGame.Audio"
+            });
+    }
 }

@@ -9,21 +9,35 @@ using Entitas.CodeGeneration.EntityIndex;
 using Entitas.CodeGeneration.Events;
 using Entitas.CodeGeneration.VisualDebugging;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Entitas.CodeGeneration;
 
 [Generator]
 public class EntitasGenerator : IIncrementalGenerator
 {
-    const string MainAssembly = "Assembly-CSharp"; // TODO: Add config (in .editorconfig?)
+    // Default assembly when no configuration is provided
+    const string DefaultMainAssembly = "Assembly-CSharp";
     const string TestsAssembly = "Entitas.CodeGeneration-Tests";
-    
+
+    // .editorconfig / MSBuild property key to configure target assemblies
+    // Usage in .editorconfig:
+    //   [*.cs]
+    //   build_property.EntitasTargetAssemblies = Assembly-CSharp,MyGame.Gameplay,MyGame.Audio
+    // Or in .csproj:
+    //   <EntitasTargetAssemblies>Assembly-CSharp;MyGame.Gameplay</EntitasTargetAssemblies>
+    internal const string TargetAssembliesPropertyKey = "build_property.EntitasTargetAssemblies";
+
     const bool VisualDebuggingGenerationEnabled = true; // TODO: Add config (in .editorconfig?)
     
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var shouldRun = context.CompilationProvider.Select(static (compilation, _) 
-            => compilation.AssemblyName is MainAssembly or TestsAssembly);
+        var configuredAssemblies = context.AnalyzerConfigOptionsProvider
+            .Select(static (provider, _) => ParseTargetAssemblies(provider.GlobalOptions));
+
+        var shouldRun = context.CompilationProvider
+            .Combine(configuredAssemblies)
+            .Select(static (pair, _) => ShouldRunForAssembly(pair.Left.AssemblyName, pair.Right));
     
         var contextsData = ContextGenerationHelper.GetContextsData(context);
         RegisterContextsGeneration(context, shouldRun, contextsData);
@@ -154,9 +168,14 @@ public class EntitasGenerator : IIncrementalGenerator
         IncrementalGeneratorInitializationContext context,
         in IncrementalValueProvider<ImmutableArray<ContextData>> contextsData)
     {
+        var configuredAssemblies = context.AnalyzerConfigOptionsProvider
+            .Select(static (provider, _) => ParseTargetAssemblies(provider.GlobalOptions));
+
         // skip for tests, to avoid bloating snapshots
-        var shouldRun = context.CompilationProvider.Select(static (compilation, _) 
-            => compilation.AssemblyName is MainAssembly /*or TestsAssembly*/);
+        var shouldRun = context.CompilationProvider
+            .Combine(configuredAssemblies)
+            .Select(static (pair, _) => ShouldRunForAssembly(pair.Left.AssemblyName, pair.Right)
+                && pair.Left.AssemblyName != TestsAssembly);
 
         var combinedInput = shouldRun.Combine(contextsData);
         context.RegisterSourceOutput(combinedInput, 
@@ -174,5 +193,49 @@ public class EntitasGenerator : IIncrementalGenerator
         
         // Context Observers, Feature
         VisualDebuggingGenerationHelper.Generate(spc, contextsData);
+    }
+
+    /// <summary>
+    /// Parses the target assemblies from the analyzer config options.
+    /// Reads the <c>build_property.EntitasTargetAssemblies</c> MSBuild property,
+    /// which can be set via a <c>&lt;EntitasTargetAssemblies&gt;</c> property in the .csproj file
+    /// or via <c>build_property.EntitasTargetAssemblies</c> in an .editorconfig.
+    /// </summary>
+    internal static ImmutableArray<string> ParseTargetAssemblies(AnalyzerConfigOptions options)
+    {
+        if (options.TryGetValue(TargetAssembliesPropertyKey, out var assembliesValue)
+            && !string.IsNullOrWhiteSpace(assembliesValue))
+        {
+            var assemblies = assembliesValue.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+            var builder = ImmutableArray.CreateBuilder<string>(assemblies.Length);
+            foreach (var a in assemblies)
+            {
+                var trimmed = a.Trim();
+                if (!string.IsNullOrEmpty(trimmed))
+                    builder.Add(trimmed);
+            }
+            return builder.ToImmutable();
+        }
+        return ImmutableArray<string>.Empty;
+    }
+
+    /// <summary>
+    /// Determines whether the generator should run for the given assembly.
+    /// If no assemblies are configured, defaults to <see cref="DefaultMainAssembly"/> ("Assembly-CSharp").
+    /// The test assembly (<see cref="TestsAssembly"/>) is always included.
+    /// </summary>
+    internal static bool ShouldRunForAssembly(string? assemblyName, ImmutableArray<string> configuredAssemblies)
+    {
+        if (assemblyName == null) return false;
+        
+        // Test assembly is always included regardless of configuration
+        if (assemblyName == TestsAssembly) return true;
+
+        // If assemblies are explicitly configured, check against the list
+        if (!configuredAssemblies.IsDefaultOrEmpty)
+            return configuredAssemblies.Contains(assemblyName);
+
+        // Default behavior: only run for the main Unity assembly
+        return assemblyName == DefaultMainAssembly;
     }
 }
