@@ -113,7 +113,6 @@ public partial class Contexts
 {
     public const string TestMember = "TestMember";
 
-
     [Entitas.CodeGeneration.Attributes.PostConstructor]
     public void InitializeEntityIndices()
     {
