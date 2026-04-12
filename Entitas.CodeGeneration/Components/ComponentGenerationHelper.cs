@@ -210,4 +210,30 @@ public static class ComponentGenerationHelper
         
         spc.AddSource(componentData.FullComponentName + ".g.cs", SourceText.From(componentSource, Encoding.UTF8));
     }
+
+    /// <summary>
+    /// Generates extension methods for a component whose context is defined in a referenced
+    /// assembly (secondary-assembly scenario). Uses extension methods instead of partial class
+    /// additions because partial classes cannot span assembly boundaries.
+    /// </summary>
+    public static void GenerateEntityComponentExtension(
+        SourceProductionContext spc,
+        in ComponentData componentData,
+        in ContextData contextData)
+    {
+        var secondaryLookupName = contextData.ContextName + "ExtComponentsLookup";
+        var secondaryIndexExpression = $"{secondaryLookupName}.{componentData.GetComponentName()}";
+
+        var source = componentData.Members.Length == 0
+            ? ComponentTemplates.GetFlagComponentEntityExtensionSource(
+                contextData, componentData, secondaryIndexExpression)
+            : ComponentTemplates.GetStandardComponentEntityExtensionSource(
+                contextData, componentData, secondaryIndexExpression);
+
+        source += "\n" + ComponentTemplates.GetComponentMatcherExtensionSource(
+            contextData, componentData, secondaryIndexExpression);
+
+        var fileName = contextData.ContextName + componentData.GetComponentName().AddComponentSuffix() + "Ext";
+        spc.AddSource($"{fileName}.g.cs", SourceText.From(source, Encoding.UTF8));
+    }
 }

@@ -302,4 +302,41 @@ public class TestEventComponent : IComponent
 {
 }
 ";
+
+    /// <summary>
+    /// Primary assembly source: defines the Game context + one component.
+    /// The secondary assembly source below adds more components to the same context.
+    /// </summary>
+    public const string CrossAssemblyPrimarySource = @"
+using Entitas;
+using Entitas.CodeGeneration.Attributes;
+
+public sealed class GameAttribute : Entitas.CodeGeneration.Attributes.ContextAttribute
+{
+    public GameAttribute() : base(""Game"") {}
+}
+
+public class PositionComponent : IComponent
+{
+    public float X;
+    public float Y;
+}
+";
+
+    /// <summary>
+    /// Secondary assembly source: defines components targeting the Game context from the primary assembly.
+    /// Contains a flag component and a member component.
+    /// </summary>
+    public const string CrossAssemblySecondarySource = @"
+using Entitas;
+
+public class SpeedComponent : IComponent
+{
+    public float Value;
+}
+
+public class DeadComponent : IComponent
+{
+}
+";
 }

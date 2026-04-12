@@ -9,6 +9,7 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace Entitas.CodeGeneration.Contexts;
 
+
 public static class ContextGenerationHelper
 {
     public const string DefaultContextName = "Game";
@@ -136,10 +137,57 @@ public static class ContextGenerationHelper
         var generatedSource = ContextTemplates.ContextTemplate
             .Replace("${ContextName}", data.ContextName)
             .Replace("${ContextType}", data.ContextTypeName)
-            .Replace("${EntityType}", data.EntityTypeName)
-            .Replace("${Lookup}", data.ContextName + ComponentGenerationHelper.ComponentsLookupName);
+            .Replace("${EntityType}", data.EntityTypeName);
         
         spc.AddSource(data.ContextTypeName + ".g.cs", SourceText.From(generatedSource, Encoding.UTF8));
+    }
+
+    /// <summary>
+    /// Returns context data for ContextAttribute subclasses found in REFERENCED assemblies
+    /// (i.e., contexts whose owning assembly is a dependency of the current compilation).
+    /// Used to detect secondary-assembly scenarios where a component uses a context defined elsewhere.
+    /// </summary>
+    public static IncrementalValueProvider<ImmutableArray<ContextData>> GetReferencedContextsData(
+        IncrementalGeneratorInitializationContext context)
+    {
+        return context.CompilationProvider.Select(static (compilation, _) =>
+        {
+            var contextAttrType = compilation.GetTypeByMetadataName(ContextAttributeTypeName!);
+            if (contextAttrType == null)
+                return ImmutableArray<ContextData>.Empty;
+
+            var builder = ImmutableArray.CreateBuilder<ContextData>();
+
+            foreach (var reference in compilation.References)
+            {
+                if (compilation.GetAssemblyOrModuleSymbol(reference) is not IAssemblySymbol assemblySymbol)
+                    continue;
+
+                CollectContextAttributesInNamespace(assemblySymbol.GlobalNamespace, contextAttrType, builder);
+            }
+
+            return builder.ToImmutable();
+        });
+    }
+
+    static void CollectContextAttributesInNamespace(
+        INamespaceSymbol ns,
+        INamedTypeSymbol contextAttrType,
+        ImmutableArray<ContextData>.Builder builder)
+    {
+        foreach (var type in ns.GetTypeMembers())
+        {
+            if (!type.IsAbstract
+                && type.Name.EndsWith(AttributeName)
+                && SymbolEqualityComparer.Default.Equals(type.BaseType, contextAttrType))
+            {
+                var contextName = type.Name.Substring(0, type.Name.Length - AttributeName.Length);
+                builder.Add(new ContextData(contextName));
+            }
+        }
+
+        foreach (var subNs in ns.GetNamespaceMembers())
+            CollectContextAttributesInNamespace(subNs, contextAttrType, builder);
     }
 
     public static void GenerateContextMatcher(SourceProductionContext spc, ContextData data)

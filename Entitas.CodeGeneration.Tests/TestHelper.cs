@@ -78,6 +78,64 @@ public static class TestHelper
         return Verifier.Verify(combinedOutput).UseExtension("cs");
     }
 
+    /// <summary>
+    /// Simulates a two-assembly setup for cross-assembly context testing:
+    /// 1. Compiles <paramref name="primarySource"/> (assembly: "Entitas.CodeGeneration-Tests")
+    ///    through the generator to produce the primary assembly with context infrastructure.
+    /// 2. Creates a secondary compilation (assembly: "Assembly-CSharp") that references
+    ///    the generated primary assembly, then runs the generator on it.
+    /// Only the secondary compilation's generated output is snapshot-tested.
+    /// </summary>
+    public static Task VerifySecondaryAssembly(
+        string primarySource,
+        string secondarySource,
+        ITestOutputHelper outputHelper)
+    {
+        var references = GetCompilationReferences();
+
+        // ---- Step 1: compile primary assembly ----
+        var primaryTree = CSharpSyntaxTree.ParseText(primarySource);
+        var primaryCompilation = CSharpCompilation.Create(
+            assemblyName: "Entitas.CodeGeneration-Tests",
+            syntaxTrees: new[] { primaryTree },
+            references: references);
+
+        var primaryDriver = (GeneratorDriver)CSharpGeneratorDriver.Create(new EntitasGenerator());
+        var sw = Stopwatch.StartNew();
+        primaryDriver = primaryDriver.RunGeneratorsAndUpdateCompilation(
+            primaryCompilation, out var primaryUpdated, out _);
+        sw.Stop();
+        outputHelper.WriteLine($"Primary generation: {sw.Elapsed}");
+
+        // ---- Step 2: compile secondary assembly referencing the primary ----
+        var secondaryTree = CSharpSyntaxTree.ParseText(secondarySource);
+        var secondaryCompilation = CSharpCompilation.Create(
+            assemblyName: "Assembly-CSharp",
+            syntaxTrees: new[] { secondaryTree },
+            references: references
+                .Concat(new[] { primaryUpdated.ToMetadataReference() })
+                .ToList());
+
+        var secondaryDriver = (GeneratorDriver)CSharpGeneratorDriver.Create(new EntitasGenerator());
+        sw = Stopwatch.StartNew();
+        secondaryDriver = secondaryDriver.RunGeneratorsAndUpdateCompilation(
+            secondaryCompilation, out _, out _);
+        sw.Stop();
+        outputHelper.WriteLine($"Secondary generation: {sw.Elapsed}");
+
+        var runResults = secondaryDriver.GetRunResult();
+
+        var outputs = runResults
+            .Results
+            .SelectMany(r => r.GeneratedSources)
+            .OrderBy(s => s.HintName)
+            .Select(s => "// " + s.HintName + "\n" + s.SourceText)
+            .ToList();
+
+        var combinedOutput = string.Join("\n\n", outputs);
+        return Verifier.Verify(combinedOutput).UseExtension("cs");
+    }
+
     static IEnumerable<MetadataReference> GetCompilationReferences()
     {
         // it's suboptimal and slow to add all possible references to the compilation...

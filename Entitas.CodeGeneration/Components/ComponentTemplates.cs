@@ -304,4 +304,147 @@ ${memberAssignmentList}
             .Replace("${componentNames}", componentNames)
             .Replace("${EntityType}", entityType);
     }
+
+    // -------------------------------------------------------------------------
+    // Extension-method variants for SECONDARY assemblies
+    // (where the context is defined in a referenced assembly – partial classes
+    //  cannot cross assembly boundaries, so we fall back to extension methods)
+    // -------------------------------------------------------------------------
+
+    const string StandardComponentEntityExtensionTemplate =
+        @"public static class ${ComponentName}${ContextName}EntityExtensions
+{
+    public static ${ComponentType} ${validComponentName}(this ${EntityType} entity)
+        => (${ComponentType})entity.GetComponent(${Index});
+
+    public static bool has${ComponentName}(this ${EntityType} entity)
+        => entity.HasComponent(${Index});
+
+    public static void Add${ComponentName}(this ${EntityType} entity, ${newMethodParameters})
+    {
+        var index = ${Index};
+        var component = (${ComponentType})entity.CreateComponent(index, typeof(${ComponentType}));
+${memberAssignmentList}
+        entity.AddComponent(index, component);
+    }
+
+    public static void Replace${ComponentName}(this ${EntityType} entity, ${newMethodParameters})
+    {
+        var index = ${Index};
+        var component = (${ComponentType})entity.CreateComponent(index, typeof(${ComponentType}));
+${memberAssignmentList}
+        entity.ReplaceComponent(index, component);
+    }
+
+    public static void Remove${ComponentName}(this ${EntityType} entity)
+        => entity.RemoveComponent(${Index});
+}
+";
+
+    public static string GetStandardComponentEntityExtensionSource(
+        in ContextData contextData,
+        in ComponentData componentData,
+        string secondaryIndexExpression)
+    {
+        var componentName = componentData.GetComponentName();
+        var validComponentName = componentName.ToLowerFirst().AddPrefixIfIsKeyword();
+        var newMethodParameters = componentData.Members.GetMethodParameters(true);
+        var memberAssignmentList = componentData.Members.GetMemberAssignmentList();
+
+        return StandardComponentEntityExtensionTemplate
+            .Replace("${ContextName}", contextData.ContextName)
+            .Replace("${EntityType}", contextData.EntityTypeName)
+            .Replace("${ComponentType}", componentData.FullTypeName)
+            .Replace("${ComponentName}", componentName)
+            .Replace("${validComponentName}", validComponentName)
+            .Replace("${Index}", secondaryIndexExpression)
+            .Replace("${newMethodParameters}", newMethodParameters)
+            .Replace("${memberAssignmentList}", memberAssignmentList);
+    }
+
+    const string FlagComponentEntityExtensionTemplate =
+        @"public static class ${ComponentName}${ContextName}EntityExtensions
+{
+    static readonly ${ComponentType} ${componentName}Component = new ${ComponentType}();
+
+    public static bool ${prefixedComponentName}(this ${EntityType} entity)
+        => entity.HasComponent(${Index});
+
+    public static void Set${ComponentName}(this ${EntityType} entity, bool value)
+    {
+        if (value != ${prefixedComponentName}(entity))
+        {
+            var index = ${Index};
+            if (value)
+            {
+                var componentPool = entity.GetComponentPool(index);
+                var component = componentPool.Count > 0
+                    ? componentPool.Pop()
+                    : ${componentName}Component;
+                entity.AddComponent(index, component);
+            }
+            else
+            {
+                entity.RemoveComponent(index);
+            }
+        }
+    }
+}
+";
+
+    public static string GetFlagComponentEntityExtensionSource(
+        in ContextData contextData,
+        in ComponentData componentData,
+        string secondaryIndexExpression)
+    {
+        var componentName = componentData.GetComponentName();
+
+        return FlagComponentEntityExtensionTemplate
+            .Replace("${ContextName}", contextData.ContextName)
+            .Replace("${EntityType}", contextData.EntityTypeName)
+            .Replace("${ComponentType}", componentData.FullTypeName)
+            .Replace("${ComponentName}", componentName)
+            .Replace("${componentName}", componentData.GetComponentNameLowerFirst())
+            .Replace("${Index}", secondaryIndexExpression)
+            .Replace("${prefixedComponentName}", componentData.PrefixedComponentName());
+    }
+
+    const string ComponentMatcherExtensionTemplate =
+        @"public static class ${ComponentName}${ContextName}MatcherExtensions
+{
+    static Entitas.IMatcher<${EntityType}> _matcher${ComponentName};
+
+    public static Entitas.IMatcher<${EntityType}> ${ComponentName}
+    {
+        get
+        {
+            if (_matcher${ComponentName} == null)
+            {
+                var matcher = (Entitas.Matcher<${EntityType}>)Entitas.Matcher<${EntityType}>.AllOf(${Index});
+                matcher.componentNames = ${RegistryName}.ComponentNames;
+                _matcher${ComponentName} = matcher;
+            }
+
+            return _matcher${ComponentName};
+        }
+    }
+}
+";
+
+    public static string GetComponentMatcherExtensionSource(
+        in ContextData contextData,
+        in ComponentData componentData,
+        string secondaryIndexExpression)
+    {
+        var entityType = contextData.EntityTypeName;
+        var componentName = componentData.GetComponentName();
+        var registryName = contextData.ContextName + "ContextComponentRegistry";
+
+        return ComponentMatcherExtensionTemplate
+            .Replace("${ContextName}", contextData.ContextName)
+            .Replace("${ComponentName}", componentName)
+            .Replace("${Index}", secondaryIndexExpression)
+            .Replace("${RegistryName}", registryName)
+            .Replace("${EntityType}", entityType);
+    }
 }

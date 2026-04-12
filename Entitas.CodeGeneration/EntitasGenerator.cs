@@ -1,5 +1,8 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
 using Entitas.CodeGeneration.Cleanup;
+using Entitas.CodeGeneration.ComponentRegistry;
 using Entitas.CodeGeneration.Components;
 using Entitas.CodeGeneration.Components.Data;
 using Entitas.CodeGeneration.ComponentsLookups;
@@ -39,16 +42,21 @@ public class EntitasGenerator : IIncrementalGenerator
             .Combine(configuredAssemblies)
             .Select(static (pair, _) => ShouldRunForAssembly(pair.Left.AssemblyName, pair.Right));
     
-        var contextsData = ContextGenerationHelper.GetContextsData(context);
-        RegisterContextsGeneration(context, shouldRun, contextsData);
+        // Contexts defined in THIS compilation (primary mode)
+        var localContextsData = ContextGenerationHelper.GetContextsData(context);
+        RegisterContextsGeneration(context, shouldRun, localContextsData);
         
         var componentsData = ComponentGenerationHelper.GetComponentsData(context);
         var componentsByContextNameLookup = ComponentsLookupGenerationHelper.GetComponentsByContextNameLookup(componentsData);
-        RegisterIndividualComponentsGeneration(context, shouldRun, contextsData, componentsByContextNameLookup);
-        RegisterSharedSourcesGeneration(context, shouldRun, contextsData, componentsData, componentsByContextNameLookup);
+        RegisterIndividualComponentsGeneration(context, shouldRun, localContextsData, componentsByContextNameLookup);
+        RegisterSharedSourcesGeneration(context, shouldRun, localContextsData, componentsData, componentsByContextNameLookup);
+
+        // Contexts defined in REFERENCED assemblies (secondary / cross-assembly mode)
+        var referencedContextsData = ContextGenerationHelper.GetReferencedContextsData(context);
+        RegisterSecondaryComponentsGeneration(context, shouldRun, localContextsData, referencedContextsData, componentsData);
 
         if (VisualDebuggingGenerationEnabled)
-            RegisterVisualDebuggingGeneration(context, contextsData);
+            RegisterVisualDebuggingGeneration(context, localContextsData);
     }
 
     void RegisterContextsGeneration(
@@ -71,7 +79,22 @@ public class EntitasGenerator : IIncrementalGenerator
             return;
 
         var contextsData = input.Item2;
+
+        // Skip if no local context definitions exist (secondary-assembly case).
+        // Generating Contexts.g.cs in a secondary assembly would produce an empty
+        // stub that conflicts with the primary assembly's Contexts class.
+        if (contextsData.IsDefaultOrEmpty)
+            return;
+
         ContextGenerationHelper.GenerateContexts(spc, contextsData);
+
+        // Generate a ComponentRegistry for every local context so that secondary
+        // assemblies can register additional components into it at runtime.
+        foreach (var contextData in contextsData)
+        {
+            var lookupName = contextData.ContextName + ComponentGenerationHelper.ComponentsLookupName;
+            ComponentRegistryGenerationHelper.GenerateContextComponentRegistry(spc, contextData, lookupName);
+        }
     }
 
     void RegisterSharedSourcesGeneration(
@@ -163,6 +186,82 @@ public class EntitasGenerator : IIncrementalGenerator
             CleanupGenerationHelper.GenerateComponentCleanupSystem(spc, componentData, contextData);
     }
 
+    // -------------------------------------------------------------------------
+    // Secondary-assembly (cross-assembly context) generation
+    // -------------------------------------------------------------------------
+
+    void RegisterSecondaryComponentsGeneration(
+        IncrementalGeneratorInitializationContext context,
+        IncrementalValueProvider<bool> shouldRun,
+        in IncrementalValueProvider<ImmutableArray<ContextData>> localContextsData,
+        in IncrementalValueProvider<ImmutableArray<ContextData>> referencedContextsData,
+        in IncrementalValueProvider<ImmutableArray<ComponentData>> componentsData)
+    {
+        // We only want to generate secondary code when the current assembly has NO local context
+        // definitions for a given context name but DOES have components targeting that context.
+        // Combine everything needed and dispatch per (referencedContext, component) pair.
+        var combined = shouldRun
+            .Combine(localContextsData)
+            .Combine(referencedContextsData)
+            .Combine(componentsData);
+
+        context.RegisterSourceOutput(combined,
+            static (spc, source) => GenerateSecondaryComponents(source, spc));
+    }
+
+    static void GenerateSecondaryComponents(
+        (((bool, ImmutableArray<ContextData>), ImmutableArray<ContextData>), ImmutableArray<ComponentData>) input,
+        SourceProductionContext spc)
+    {
+        var shouldRun      = input.Item1.Item1.Item1;
+        var localContexts  = input.Item1.Item1.Item2;
+        var refContexts    = input.Item1.Item2;
+        var components     = input.Item2;
+
+        if (!shouldRun) return;
+        if (refContexts.IsDefaultOrEmpty) return;
+
+        // Build a fast set of locally-defined context names so we can skip them
+        var localContextNames = new HashSet<string>(localContexts.Select(c => c.ContextName));
+
+        // Only consider contexts that are referenced (not local)
+        var secondaryContexts = refContexts
+            .Where(c => !localContextNames.Contains(c.ContextName))
+            .ToArray();
+
+        if (secondaryContexts.Length == 0) return;
+        
+        var secondaryContextLookup = secondaryContexts.ToDictionary(c => c.ContextName);
+
+        // Group components by context for the secondary-lookup generation
+        var componentsByContext = new Dictionary<string, List<ComponentData>>();
+        foreach (var component in components)
+        {
+            foreach (var contextName in component.ContextNames)
+            {
+                if (!secondaryContextLookup.ContainsKey(contextName)) continue;
+                if (!componentsByContext.TryGetValue(contextName, out var list))
+                    componentsByContext[contextName] = list = new List<ComponentData>();
+                list.Add(component);
+            }
+        }
+
+        if (componentsByContext.Count == 0) return;
+
+        // Generate the secondary lookup + module initializer per context
+        foreach (var kvp in componentsByContext)
+        {
+            var contextData = secondaryContextLookup[kvp.Key];
+            var contextComponents = kvp.Value.ToImmutableArray();
+            ComponentRegistryGenerationHelper.GenerateSecondaryComponentsLookup(
+                spc, contextData, contextComponents);
+
+            // Generate per-component extension methods
+            foreach (var component in contextComponents)
+                ComponentGenerationHelper.GenerateEntityComponentExtension(spc, component, contextData);
+        }
+    }
+
 
     void RegisterVisualDebuggingGeneration(
         IncrementalGeneratorInitializationContext context,
@@ -190,7 +289,12 @@ public class EntitasGenerator : IIncrementalGenerator
             return;
 
         var contextsData = input.Item2;
-        
+
+        // Skip visual debugging generation for secondary assemblies (no local contexts).
+        // Feature.g.cs / ContextObservers.g.cs would conflict with the primary assembly.
+        if (contextsData.IsDefaultOrEmpty)
+            return;
+
         // Context Observers, Feature
         VisualDebuggingGenerationHelper.Generate(spc, contextsData);
     }

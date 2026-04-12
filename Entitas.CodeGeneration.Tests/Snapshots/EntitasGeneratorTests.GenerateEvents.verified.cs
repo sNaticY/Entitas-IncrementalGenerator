@@ -373,12 +373,12 @@ public sealed partial class GameContext : Entitas.Context<GameEntity>
 {
     public GameContext()
         : base(
-            GameComponentsLookup.TotalComponents,
+            GameContextComponentRegistry.TotalComponents,
             0,
             new Entitas.ContextInfo(
                 "Game",
-                GameComponentsLookup.componentNames,
-                GameComponentsLookup.componentTypes
+                GameContextComponentRegistry.ComponentNames,
+                GameContextComponentRegistry.ComponentTypes
             ),
             (entity) =>
 
@@ -391,6 +391,43 @@ public sealed partial class GameContext : Entitas.Context<GameEntity>
         ) 
     {
     }
+}
+
+
+// GameContextComponentRegistry.g.cs
+public static class GameContextComponentRegistry
+{
+    static int _total = GameComponentsLookup.TotalComponents;
+    static string[] _names = GameComponentsLookup.componentNames;
+    static System.Type[] _types = GameComponentsLookup.componentTypes;
+
+    /// <summary>
+    /// Called by secondary assemblies to register additional components into this context.
+    /// Must be called before the context is first instantiated (i.e., before Contexts.sharedInstance
+    /// is accessed). Using [ModuleInitializer] in the secondary assembly guarantees this ordering.
+    /// </summary>
+    /// <returns>The base component index assigned to the calling assembly.</returns>
+    public static int Register(int count, string[] names, System.Type[] types)
+    {
+        var baseIndex = _total;
+        _total += count;
+
+        var newNames = new string[_names.Length + names.Length];
+        _names.CopyTo(newNames, 0);
+        names.CopyTo(newNames, _names.Length);
+        _names = newNames;
+
+        var newTypes = new System.Type[_types.Length + types.Length];
+        _types.CopyTo(newTypes, 0);
+        types.CopyTo(newTypes, _types.Length);
+        _types = newTypes;
+
+        return baseIndex;
+    }
+
+    public static int TotalComponents => _total;
+    public static string[] ComponentNames => _names;
+    public static System.Type[] ComponentTypes => _types;
 }
 
 
@@ -1269,12 +1306,12 @@ public sealed partial class InputContext : Entitas.Context<InputEntity>
 {
     public InputContext()
         : base(
-            InputComponentsLookup.TotalComponents,
+            InputContextComponentRegistry.TotalComponents,
             0,
             new Entitas.ContextInfo(
                 "Input",
-                InputComponentsLookup.componentNames,
-                InputComponentsLookup.componentTypes
+                InputContextComponentRegistry.ComponentNames,
+                InputContextComponentRegistry.ComponentTypes
             ),
             (entity) =>
 
@@ -1287,6 +1324,43 @@ public sealed partial class InputContext : Entitas.Context<InputEntity>
         ) 
     {
     }
+}
+
+
+// InputContextComponentRegistry.g.cs
+public static class InputContextComponentRegistry
+{
+    static int _total = InputComponentsLookup.TotalComponents;
+    static string[] _names = InputComponentsLookup.componentNames;
+    static System.Type[] _types = InputComponentsLookup.componentTypes;
+
+    /// <summary>
+    /// Called by secondary assemblies to register additional components into this context.
+    /// Must be called before the context is first instantiated (i.e., before Contexts.sharedInstance
+    /// is accessed). Using [ModuleInitializer] in the secondary assembly guarantees this ordering.
+    /// </summary>
+    /// <returns>The base component index assigned to the calling assembly.</returns>
+    public static int Register(int count, string[] names, System.Type[] types)
+    {
+        var baseIndex = _total;
+        _total += count;
+
+        var newNames = new string[_names.Length + names.Length];
+        _names.CopyTo(newNames, 0);
+        names.CopyTo(newNames, _names.Length);
+        _names = newNames;
+
+        var newTypes = new System.Type[_types.Length + types.Length];
+        _types.CopyTo(newTypes, 0);
+        types.CopyTo(newTypes, _types.Length);
+        _types = newTypes;
+
+        return baseIndex;
+    }
+
+    public static int TotalComponents => _total;
+    public static string[] ComponentNames => _names;
+    public static System.Type[] ComponentTypes => _types;
 }
 
 

@@ -17,7 +17,6 @@ Limitations:
   - No more Jenny.properties.. so contexts must be defined in code (see Setup section).
   - "Assembly-CSharp" is hardcoded as the main assembly in EntitasGenerator.cs (configurable via MSBuild property, see Split Assembly section).
   - Default Context name is "Game" (when you don't specify the context on a component, it goes to the default context - Game).
-- Generation is not supported across multiple assemblies (due to 'partial' usage in Entities and Contexts)
 
 Setup:
 - Build the solution (typically in Release configuration)
@@ -56,3 +55,13 @@ Split Assembly (optional):
 ```
 - The generator will then run in each listed assembly independently, generating code only for the components defined in that assembly.
 - Each assembly should define its own context attributes and components — the generator processes them per-assembly.
+
+Cross-Assembly Contexts:
+- A context (e.g. `GameAttribute`) can be defined in one assembly (the *primary* assembly) and used from another (the *secondary* assembly).
+- The primary assembly generates the full context infrastructure as usual, **plus** a `GameContextComponentRegistry` class that lets secondary assemblies extend the component count at runtime.
+- The secondary assembly (the one that references the primary and defines new `[Game]` components) generates:
+  - `GameExtComponentsLookup` — an `internal` class holding the dynamically assigned component indices for this assembly.
+  - A `[ModuleInitializer]` that automatically calls `GameContextComponentRegistry.Register(...)` when the assembly is loaded — before any game code runs.
+  - Extension methods on `GameEntity` and matcher extension classes so the API stays ergonomic.
+- **Important ordering constraint:** `Contexts.sharedInstance` (which creates the `GameContext`) must not be accessed until all secondary assemblies have been loaded. In Unity this is automatic because all managed assemblies are loaded at startup before any `MonoBehaviour` code runs.
+- Flag-component API note: Because C# does not support extension *properties*, the flag-component accessor in a secondary assembly is exposed as a method (`entity.isDead()`) and a setter (`entity.SetDead(bool)`), instead of a property.

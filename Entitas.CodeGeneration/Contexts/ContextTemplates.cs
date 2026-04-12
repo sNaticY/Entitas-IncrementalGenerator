@@ -60,12 +60,12 @@ ${contextAssignmentList}
 {
     public ${ContextType}()
         : base(
-            ${Lookup}.TotalComponents,
+            ${ContextName}ContextComponentRegistry.TotalComponents,
             0,
             new Entitas.ContextInfo(
                 ""${ContextName}"",
-                ${Lookup}.componentNames,
-                ${Lookup}.componentTypes
+                ${ContextName}ContextComponentRegistry.ComponentNames,
+                ${ContextName}ContextComponentRegistry.ComponentTypes
             ),
             (entity) =>
 

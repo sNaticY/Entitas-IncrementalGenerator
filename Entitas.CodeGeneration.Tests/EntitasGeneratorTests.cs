@@ -129,4 +129,17 @@ public class TestMember99Component : IComponent
                 [EntitasGenerator.TargetAssembliesPropertyKey] = "Assembly-CSharp,MyGame.Audio"
             });
     }
+
+    [Fact]
+    public Task GenerateCrossAssemblyComponent()
+    {
+        // Primary assembly defines GameContext + PositionComponent.
+        // Secondary assembly adds SpeedComponent and DeadComponent to the same Game context.
+        // The generator should emit extension methods + dynamic lookup + module initializer
+        // instead of the usual partial-class additions.
+        return TestHelper.VerifySecondaryAssembly(
+            TestSources.CrossAssemblyPrimarySource,
+            TestSources.CrossAssemblySecondarySource,
+            _output);
+    }
 }
