@@ -144,31 +144,32 @@ public sealed partial class GameMatcher
 
 
 // GameNormalComponent.g.cs
-public partial class GameEntity
+public static class GameNormalEntityExtensions
 {
     static readonly NormalComponent normalComponent = new NormalComponent();
 
-    public bool isNormal
+    public static bool IsNormal(this GameEntity entity)
     {
-        get { return HasComponent(GameComponentsLookup.Normal); }
-        set 
-        {
-            if (value != isNormal)
-            {
-                var index = GameComponentsLookup.Normal;
-                if (value)
-                {
-                    var componentPool = GetComponentPool(index);
-                    var component = componentPool.Count > 0
-                            ? componentPool.Pop()
-                            : normalComponent;
+        return entity.HasComponent(GameComponentsLookup.Normal);
+    }
 
-                    AddComponent(index, component);
-                }
-                else
-                {
-                    RemoveComponent(index);
-                }
+    public static void SetNormal(this GameEntity entity, bool value)
+    {
+        if (value != entity.IsNormal())
+        {
+            var index = GameComponentsLookup.Normal;
+            if (value)
+            {
+                var componentPool = entity.GetComponentPool(index);
+                var component = componentPool.Count > 0
+                        ? componentPool.Pop()
+                        : normalComponent;
+
+                entity.AddComponent(index, component);
+            }
+            else
+            {
+                entity.RemoveComponent(index);
             }
         }
     }
@@ -178,18 +179,15 @@ public sealed partial class GameMatcher
 {
     static Entitas.IMatcher<GameEntity> _matcherNormal;
 
-    public static Entitas.IMatcher<GameEntity> Normal
+    public static Entitas.IMatcher<GameEntity> Normal()
     {
-        get
+        if (_matcherNormal == null)
         {
-            if (_matcherNormal == null)
-            {
-                var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.Normal);
-                matcher.componentNames = GameComponentsLookup.componentNames;
-                _matcherNormal = matcher;
-            }
-
-            return _matcherNormal;
+            var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.Normal);
+            matcher.componentNames = GameComponentsLookup.componentNames;
+            _matcherNormal = matcher;
         }
+
+        return _matcherNormal;
     }
 }

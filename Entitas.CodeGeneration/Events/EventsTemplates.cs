@@ -3,28 +3,28 @@ namespace Entitas.CodeGeneration.Events;
 public static class EventsTemplates
 {
     public const string EventEntityApiTemplate =
-        @"public partial class ${EntityType}
+        @"public static class ${EventExtensionsType}
 {
-    public void Add${EventListener}(I${EventListener} value)
+    public static void Add${EventListener}(this ${EntityType} entity, I${EventListener} value)
     {
-        var listeners = has${EventListener}
-            ? ${eventListener}.value
+        var listeners = entity.${hasEventListener}()
+            ? entity.${getEventListener}().value
             : new System.Collections.Generic.List<I${EventListener}>();
         listeners.Add(value);
-        Replace${EventListener}(listeners);
+        entity.Replace${EventListener}(listeners);
     }
 
-    public void Remove${EventListener}(I${EventListener} value, bool removeComponentWhenEmpty = true)
+    public static void Remove${EventListener}(this ${EntityType} entity, I${EventListener} value, bool removeComponentWhenEmpty = true)
     {
-        var listeners = ${eventListener}.value;
+        var listeners = entity.${getEventListener}().value;
         listeners.Remove(value);
         if (removeComponentWhenEmpty && listeners.Count == 0)
         {
-            Remove${EventListener}();
+            entity.Remove${EventListener}();
         }
         else
         {
-            Replace${EventListener}(listeners);
+            entity.Replace${EventListener}(listeners);
         }
     }
 }
@@ -54,7 +54,7 @@ public sealed class ${EventListenerComponent} : Entitas.IComponent
 
     public ${Event}EventSystem(Contexts contexts) : base(contexts.${contextName})
     {
-        _listeners = contexts.${contextName}.GetGroup(${MatcherType}.${EventListener});
+        _listeners = contexts.${contextName}.GetGroup(${MatcherType}.${EventListener}());
         _entityBuffer = new System.Collections.Generic.List<${EntityType}>();
         _listenerBuffer = new System.Collections.Generic.List<I${EventListener}>();
     }
@@ -62,7 +62,7 @@ public sealed class ${EventListenerComponent} : Entitas.IComponent
     protected override Entitas.ICollector<${EntityType}> GetTrigger(Entitas.IContext<${EntityType}> context)
     {
         return Entitas.CollectorContextExtension.CreateCollector(
-            context, Entitas.TriggerOnEventMatcherExtension.${GroupEvent}(${MatcherType}.${ComponentName})
+            context, Entitas.TriggerOnEventMatcherExtension.${GroupEvent}(${MatcherType}.${ComponentName}())
         );
     }
 
@@ -79,7 +79,7 @@ public sealed class ${EventListenerComponent} : Entitas.IComponent
             foreach (var listenerEntity in _listeners.GetEntities(_entityBuffer))
             {
                 _listenerBuffer.Clear();
-                _listenerBuffer.AddRange(listenerEntity.${eventListener}.value);
+                _listenerBuffer.AddRange(listenerEntity.${getEventListener}().value);
                 foreach (var listener in _listenerBuffer)
                 {
                     listener.On${EventComponentName}${EventType}(e${methodArgs});
@@ -103,7 +103,7 @@ public sealed class ${EventListenerComponent} : Entitas.IComponent
     protected override Entitas.ICollector<${EntityType}> GetTrigger(Entitas.IContext<${EntityType}> context)
     {
         return Entitas.CollectorContextExtension.CreateCollector(
-            context, Entitas.TriggerOnEventMatcherExtension.${GroupEvent}(${MatcherType}.${ComponentName})
+            context, Entitas.TriggerOnEventMatcherExtension.${GroupEvent}(${MatcherType}.${ComponentName}())
         );
     }
 
@@ -118,7 +118,7 @@ public sealed class ${EventListenerComponent} : Entitas.IComponent
         {
             ${cachedAccess}
             _listenerBuffer.Clear();
-            _listenerBuffer.AddRange(e.${eventListener}.value);
+            _listenerBuffer.AddRange(e.${getEventListener}().value);
             foreach (var listener in _listenerBuffer)
             {
                 listener.On${ComponentName}${EventType}(e${methodArgs});

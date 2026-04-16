@@ -29,7 +29,7 @@ ${getIndices}
     const string AddIndexTemplate =
         @"        ${contextName}.AddEntityIndex(new ${IndexType}<${ContextName}Entity, ${KeyType}>(
             ${IndexName},
-            ${contextName}.GetGroup(${ContextName}Matcher.${Matcher}),
+            ${contextName}.GetGroup(${ContextName}Matcher.${Matcher}()),
             (e, c) => ((${ComponentType})c).${MemberName}));";
     
     public static string GetAddIndexSource(

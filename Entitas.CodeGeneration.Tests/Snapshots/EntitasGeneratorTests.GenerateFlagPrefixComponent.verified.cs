@@ -144,31 +144,32 @@ public sealed partial class GameMatcher
 
 
 // GameTestFlagComponent.g.cs
-public partial class GameEntity
+public static class GameTestFlagEntityExtensions
 {
     static readonly TestFlagComponent testFlagComponent = new TestFlagComponent();
 
-    public bool hasTestFlag
+    public static bool HasTestFlag(this GameEntity entity)
     {
-        get { return HasComponent(GameComponentsLookup.TestFlag); }
-        set 
-        {
-            if (value != hasTestFlag)
-            {
-                var index = GameComponentsLookup.TestFlag;
-                if (value)
-                {
-                    var componentPool = GetComponentPool(index);
-                    var component = componentPool.Count > 0
-                            ? componentPool.Pop()
-                            : testFlagComponent;
+        return entity.HasComponent(GameComponentsLookup.TestFlag);
+    }
 
-                    AddComponent(index, component);
-                }
-                else
-                {
-                    RemoveComponent(index);
-                }
+    public static void SetTestFlag(this GameEntity entity, bool value)
+    {
+        if (value != entity.HasTestFlag())
+        {
+            var index = GameComponentsLookup.TestFlag;
+            if (value)
+            {
+                var componentPool = entity.GetComponentPool(index);
+                var component = componentPool.Count > 0
+                        ? componentPool.Pop()
+                        : testFlagComponent;
+
+                entity.AddComponent(index, component);
+            }
+            else
+            {
+                entity.RemoveComponent(index);
             }
         }
     }
@@ -178,18 +179,15 @@ public sealed partial class GameMatcher
 {
     static Entitas.IMatcher<GameEntity> _matcherTestFlag;
 
-    public static Entitas.IMatcher<GameEntity> TestFlag
+    public static Entitas.IMatcher<GameEntity> TestFlag()
     {
-        get
+        if (_matcherTestFlag == null)
         {
-            if (_matcherTestFlag == null)
-            {
-                var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.TestFlag);
-                matcher.componentNames = GameComponentsLookup.componentNames;
-                _matcherTestFlag = matcher;
-            }
-
-            return _matcherTestFlag;
+            var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.TestFlag);
+            matcher.componentNames = GameComponentsLookup.componentNames;
+            _matcherTestFlag = matcher;
         }
+
+        return _matcherTestFlag;
     }
 }

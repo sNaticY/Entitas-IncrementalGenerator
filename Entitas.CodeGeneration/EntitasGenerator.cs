@@ -87,9 +87,6 @@ public class EntitasGenerator : IIncrementalGenerator
         var contextsData = input.Item2.Item1.Item1;
         var contextLookup = contextsData.ToDictionary(ctx => ctx.ContextName);
 
-        var componentsData = input.Item2.Item1.Item2;
-        ComponentGenerationHelper.TryGenerateEntityComponentInterfaces(spc, componentsData, contextLookup);
-
         var componentsByContextNameLookup = input.Item2.Item2;
         ComponentsLookupGenerationHelper.GenerateComponentsLookups(spc, componentsByContextNameLookup, contextLookup);
         

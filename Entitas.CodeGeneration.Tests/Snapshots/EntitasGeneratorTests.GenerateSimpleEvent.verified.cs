@@ -147,31 +147,32 @@ public sealed partial class GameMatcher
 
 
 // GameTestEventComponent.g.cs
-public partial class GameEntity
+public static class GameTestEventEntityExtensions
 {
     static readonly TestEventComponent testEventComponent = new TestEventComponent();
 
-    public bool isTestEvent
+    public static bool IsTestEvent(this GameEntity entity)
     {
-        get { return HasComponent(GameComponentsLookup.TestEvent); }
-        set 
-        {
-            if (value != isTestEvent)
-            {
-                var index = GameComponentsLookup.TestEvent;
-                if (value)
-                {
-                    var componentPool = GetComponentPool(index);
-                    var component = componentPool.Count > 0
-                            ? componentPool.Pop()
-                            : testEventComponent;
+        return entity.HasComponent(GameComponentsLookup.TestEvent);
+    }
 
-                    AddComponent(index, component);
-                }
-                else
-                {
-                    RemoveComponent(index);
-                }
+    public static void SetTestEvent(this GameEntity entity, bool value)
+    {
+        if (value != entity.IsTestEvent())
+        {
+            var index = GameComponentsLookup.TestEvent;
+            if (value)
+            {
+                var componentPool = entity.GetComponentPool(index);
+                var component = componentPool.Count > 0
+                        ? componentPool.Pop()
+                        : testEventComponent;
+
+                entity.AddComponent(index, component);
+            }
+            else
+            {
+                entity.RemoveComponent(index);
             }
         }
     }
@@ -181,48 +182,45 @@ public sealed partial class GameMatcher
 {
     static Entitas.IMatcher<GameEntity> _matcherTestEvent;
 
-    public static Entitas.IMatcher<GameEntity> TestEvent
+    public static Entitas.IMatcher<GameEntity> TestEvent()
     {
-        get
+        if (_matcherTestEvent == null)
         {
-            if (_matcherTestEvent == null)
-            {
-                var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.TestEvent);
-                matcher.componentNames = GameComponentsLookup.componentNames;
-                _matcherTestEvent = matcher;
-            }
-
-            return _matcherTestEvent;
+            var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.TestEvent);
+            matcher.componentNames = GameComponentsLookup.componentNames;
+            _matcherTestEvent = matcher;
         }
+
+        return _matcherTestEvent;
     }
 }
 
 
 // GameTestEventListenerComponent.g.cs
-public partial class GameEntity
+public static class GameTestEventListenerEntityExtensions
 {
-    public TestEventListenerComponent testEventListener { get { return (TestEventListenerComponent)GetComponent(GameComponentsLookup.TestEventListener); } }
-    public bool hasTestEventListener { get { return HasComponent(GameComponentsLookup.TestEventListener); } }
+    public static TestEventListenerComponent GetTestEventListener(this GameEntity entity) { return (TestEventListenerComponent)entity.GetComponent(GameComponentsLookup.TestEventListener); }
+    public static bool HasTestEventListener(this GameEntity entity) { return entity.HasComponent(GameComponentsLookup.TestEventListener); }
 
-    public void AddTestEventListener(System.Collections.Generic.List<ITestEventListener> newValue)
+    public static void AddTestEventListener(this GameEntity entity, System.Collections.Generic.List<ITestEventListener> newValue)
     {
         var index = GameComponentsLookup.TestEventListener;
-        var component = (TestEventListenerComponent)CreateComponent(index, typeof(TestEventListenerComponent));
+        var component = (TestEventListenerComponent)entity.CreateComponent(index, typeof(TestEventListenerComponent));
         component.value = newValue;
-        AddComponent(index, component);
+        entity.AddComponent(index, component);
     }
 
-    public void ReplaceTestEventListener(System.Collections.Generic.List<ITestEventListener> newValue)
+    public static void ReplaceTestEventListener(this GameEntity entity, System.Collections.Generic.List<ITestEventListener> newValue)
     {
         var index = GameComponentsLookup.TestEventListener;
-        var component = (TestEventListenerComponent)CreateComponent(index, typeof(TestEventListenerComponent));
+        var component = (TestEventListenerComponent)entity.CreateComponent(index, typeof(TestEventListenerComponent));
         component.value = newValue;
-        ReplaceComponent(index, component);
+        entity.ReplaceComponent(index, component);
     }
 
-    public void RemoveTestEventListener()
+    public static void RemoveTestEventListener(this GameEntity entity)
     {
-        RemoveComponent(GameComponentsLookup.TestEventListener);
+        entity.RemoveComponent(GameComponentsLookup.TestEventListener);
     }
 }
 
@@ -230,46 +228,43 @@ public sealed partial class GameMatcher
 {
     static Entitas.IMatcher<GameEntity> _matcherTestEventListener;
 
-    public static Entitas.IMatcher<GameEntity> TestEventListener
+    public static Entitas.IMatcher<GameEntity> TestEventListener()
     {
-        get
+        if (_matcherTestEventListener == null)
         {
-            if (_matcherTestEventListener == null)
-            {
-                var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.TestEventListener);
-                matcher.componentNames = GameComponentsLookup.componentNames;
-                _matcherTestEventListener = matcher;
-            }
-
-            return _matcherTestEventListener;
+            var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.TestEventListener);
+            matcher.componentNames = GameComponentsLookup.componentNames;
+            _matcherTestEventListener = matcher;
         }
+
+        return _matcherTestEventListener;
     }
 }
 
 
 // GameTestEventListenerComponentEvent.g.cs
-public partial class GameEntity
+public static class GameTestEventListenerComponentEventExtensions
 {
-    public void AddTestEventListener(ITestEventListener value)
+    public static void AddTestEventListener(this GameEntity entity, ITestEventListener value)
     {
-        var listeners = hasTestEventListener
-            ? testEventListener.value
+        var listeners = entity.HasTestEventListener()
+            ? entity.GetTestEventListener().value
             : new System.Collections.Generic.List<ITestEventListener>();
         listeners.Add(value);
-        ReplaceTestEventListener(listeners);
+        entity.ReplaceTestEventListener(listeners);
     }
 
-    public void RemoveTestEventListener(ITestEventListener value, bool removeComponentWhenEmpty = true)
+    public static void RemoveTestEventListener(this GameEntity entity, ITestEventListener value, bool removeComponentWhenEmpty = true)
     {
-        var listeners = testEventListener.value;
+        var listeners = entity.GetTestEventListener().value;
         listeners.Remove(value);
         if (removeComponentWhenEmpty && listeners.Count == 0)
         {
-            RemoveTestEventListener();
+            entity.RemoveTestEventListener();
         }
         else
         {
-            ReplaceTestEventListener(listeners);
+            entity.ReplaceTestEventListener(listeners);
         }
     }
 }
@@ -295,13 +290,13 @@ public sealed class TestEventEventSystem : Entitas.ReactiveSystem<GameEntity>
     protected override Entitas.ICollector<GameEntity> GetTrigger(Entitas.IContext<GameEntity> context)
     {
         return Entitas.CollectorContextExtension.CreateCollector(
-            context, Entitas.TriggerOnEventMatcherExtension.Added(GameMatcher.TestEvent)
+            context, Entitas.TriggerOnEventMatcherExtension.Added(GameMatcher.TestEvent())
         );
     }
 
     protected override bool Filter(GameEntity entity)
     {
-        return entity.isTestEvent && entity.hasTestEventListener;
+        return entity.IsTestEvent() && entity.HasTestEventListener();
     }
 
     protected override void Execute(System.Collections.Generic.List<GameEntity> entities)
@@ -310,7 +305,7 @@ public sealed class TestEventEventSystem : Entitas.ReactiveSystem<GameEntity>
         {
             
             _listenerBuffer.Clear();
-            _listenerBuffer.AddRange(e.testEventListener.value);
+            _listenerBuffer.AddRange(e.GetTestEventListener().value);
             foreach (var listener in _listenerBuffer)
             {
                 listener.OnTestEvent(e);

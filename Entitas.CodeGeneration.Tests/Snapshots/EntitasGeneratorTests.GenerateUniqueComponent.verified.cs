@@ -147,30 +147,30 @@ public sealed partial class GameMatcher
 
 
 // GameTestUniqueComponent.g.cs
-public partial class GameContext
+public static class GameTestUniqueContextExtensions
 {
-    public GameEntity testUniqueEntity { get { return GetGroup(GameMatcher.TestUnique).GetSingleEntity(); } }
-    public TestUniqueComponent testUnique { get { return testUniqueEntity.testUnique; } }
-    public bool hasTestUnique { get { return testUniqueEntity != null; } }
+    public static GameEntity GetTestUniqueEntity(this GameContext context) { return context.GetGroup(GameMatcher.TestUnique()).GetSingleEntity(); }
+    public static TestUniqueComponent GetTestUnique(this GameContext context) { return context.GetTestUniqueEntity().GetTestUnique(); }
+    public static bool HasTestUnique(this GameContext context) { return context.GetTestUniqueEntity() != null; }
 
-    public GameEntity SetTestUnique(string newValue)
+    public static GameEntity SetTestUnique(this GameContext context, string newValue)
     {
-        if (hasTestUnique)
+        if (context.HasTestUnique())
         {
-            throw new Entitas.EntitasException("Could not set TestUnique!\n" + this + " already has an entity with TestUniqueComponent!",
-                "You should check if the context already has a testUniqueEntity before setting it or use context.ReplaceTestUnique().");
+            throw new Entitas.EntitasException("Could not set TestUnique!\n" + context + " already has an entity with TestUniqueComponent!",
+                "You should check if the context already has a GetTestUniqueEntity() before setting it or use context.ReplaceTestUnique().");
         }
-        var entity = CreateEntity();
+        var entity = context.CreateEntity();
         entity.AddTestUnique(newValue);
         return entity;
     }
 
-    public void ReplaceTestUnique(string newValue)
+    public static void ReplaceTestUnique(this GameContext context, string newValue)
     {
-        var entity = testUniqueEntity;
+        var entity = context.GetTestUniqueEntity();
         if (entity == null)
         {
-            entity = SetTestUnique(newValue);
+            entity = context.SetTestUnique(newValue);
         }
         else
         {
@@ -178,36 +178,36 @@ public partial class GameContext
         }
     }
 
-    public void RemoveTestUnique()
+    public static void RemoveTestUnique(this GameContext context)
     {
-        testUniqueEntity.Destroy();
+        context.GetTestUniqueEntity().Destroy();
     }
 }
 
-public partial class GameEntity
+public static class GameTestUniqueEntityExtensions
 {
-    public TestUniqueComponent testUnique { get { return (TestUniqueComponent)GetComponent(GameComponentsLookup.TestUnique); } }
-    public bool hasTestUnique { get { return HasComponent(GameComponentsLookup.TestUnique); } }
+    public static TestUniqueComponent GetTestUnique(this GameEntity entity) { return (TestUniqueComponent)entity.GetComponent(GameComponentsLookup.TestUnique); }
+    public static bool HasTestUnique(this GameEntity entity) { return entity.HasComponent(GameComponentsLookup.TestUnique); }
 
-    public void AddTestUnique(string newValue)
+    public static void AddTestUnique(this GameEntity entity, string newValue)
     {
         var index = GameComponentsLookup.TestUnique;
-        var component = (TestUniqueComponent)CreateComponent(index, typeof(TestUniqueComponent));
+        var component = (TestUniqueComponent)entity.CreateComponent(index, typeof(TestUniqueComponent));
         component.Value = newValue;
-        AddComponent(index, component);
+        entity.AddComponent(index, component);
     }
 
-    public void ReplaceTestUnique(string newValue)
+    public static void ReplaceTestUnique(this GameEntity entity, string newValue)
     {
         var index = GameComponentsLookup.TestUnique;
-        var component = (TestUniqueComponent)CreateComponent(index, typeof(TestUniqueComponent));
+        var component = (TestUniqueComponent)entity.CreateComponent(index, typeof(TestUniqueComponent));
         component.Value = newValue;
-        ReplaceComponent(index, component);
+        entity.ReplaceComponent(index, component);
     }
 
-    public void RemoveTestUnique()
+    public static void RemoveTestUnique(this GameEntity entity)
     {
-        RemoveComponent(GameComponentsLookup.TestUnique);
+        entity.RemoveComponent(GameComponentsLookup.TestUnique);
     }
 }
 
@@ -215,74 +215,73 @@ public sealed partial class GameMatcher
 {
     static Entitas.IMatcher<GameEntity> _matcherTestUnique;
 
-    public static Entitas.IMatcher<GameEntity> TestUnique
+    public static Entitas.IMatcher<GameEntity> TestUnique()
     {
-        get
+        if (_matcherTestUnique == null)
         {
-            if (_matcherTestUnique == null)
-            {
-                var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.TestUnique);
-                matcher.componentNames = GameComponentsLookup.componentNames;
-                _matcherTestUnique = matcher;
-            }
-
-            return _matcherTestUnique;
+            var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.TestUnique);
+            matcher.componentNames = GameComponentsLookup.componentNames;
+            _matcherTestUnique = matcher;
         }
+
+        return _matcherTestUnique;
     }
 }
 
 
 // GameTestUniqueFlagComponent.g.cs
-public partial class GameContext
+public static class GameTestUniqueFlagContextExtensions
 {
-    public GameEntity testUniqueFlagEntity { get { return GetGroup(GameMatcher.TestUniqueFlag).GetSingleEntity(); } }
+    public static GameEntity GetTestUniqueFlagEntity(this GameContext context) { return context.GetGroup(GameMatcher.TestUniqueFlag()).GetSingleEntity(); }
 
-    public bool isTestUniqueFlag
+    public static bool IsTestUniqueFlag(this GameContext context)
     {
-        get { return testUniqueFlagEntity != null; }
-        set
+        return context.GetTestUniqueFlagEntity() != null;
+    }
+
+    public static void SetTestUniqueFlag(this GameContext context, bool value)
+    {
+        var entity = context.GetTestUniqueFlagEntity();
+        if (value != (entity != null))
         {
-            var entity = testUniqueFlagEntity;
-            if (value != (entity != null))
+            if (value)
             {
-                if (value)
-                {
-                    CreateEntity().isTestUniqueFlag = true;
-                }
-                else
-                {
-                    entity.Destroy();
-                }
+                context.CreateEntity().SetTestUniqueFlag(true);
+            }
+            else
+            {
+                entity.Destroy();
             }
         }
     }
 }
 
-public partial class GameEntity
+public static class GameTestUniqueFlagEntityExtensions
 {
     static readonly TestUniqueFlagComponent testUniqueFlagComponent = new TestUniqueFlagComponent();
 
-    public bool isTestUniqueFlag
+    public static bool IsTestUniqueFlag(this GameEntity entity)
     {
-        get { return HasComponent(GameComponentsLookup.TestUniqueFlag); }
-        set 
-        {
-            if (value != isTestUniqueFlag)
-            {
-                var index = GameComponentsLookup.TestUniqueFlag;
-                if (value)
-                {
-                    var componentPool = GetComponentPool(index);
-                    var component = componentPool.Count > 0
-                            ? componentPool.Pop()
-                            : testUniqueFlagComponent;
+        return entity.HasComponent(GameComponentsLookup.TestUniqueFlag);
+    }
 
-                    AddComponent(index, component);
-                }
-                else
-                {
-                    RemoveComponent(index);
-                }
+    public static void SetTestUniqueFlag(this GameEntity entity, bool value)
+    {
+        if (value != entity.IsTestUniqueFlag())
+        {
+            var index = GameComponentsLookup.TestUniqueFlag;
+            if (value)
+            {
+                var componentPool = entity.GetComponentPool(index);
+                var component = componentPool.Count > 0
+                        ? componentPool.Pop()
+                        : testUniqueFlagComponent;
+
+                entity.AddComponent(index, component);
+            }
+            else
+            {
+                entity.RemoveComponent(index);
             }
         }
     }
@@ -292,18 +291,15 @@ public sealed partial class GameMatcher
 {
     static Entitas.IMatcher<GameEntity> _matcherTestUniqueFlag;
 
-    public static Entitas.IMatcher<GameEntity> TestUniqueFlag
+    public static Entitas.IMatcher<GameEntity> TestUniqueFlag()
     {
-        get
+        if (_matcherTestUniqueFlag == null)
         {
-            if (_matcherTestUniqueFlag == null)
-            {
-                var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.TestUniqueFlag);
-                matcher.componentNames = GameComponentsLookup.componentNames;
-                _matcherTestUniqueFlag = matcher;
-            }
-
-            return _matcherTestUniqueFlag;
+            var matcher = (Entitas.Matcher<GameEntity>)Entitas.Matcher<GameEntity>.AllOf(GameComponentsLookup.TestUniqueFlag);
+            matcher.componentNames = GameComponentsLookup.componentNames;
+            _matcherTestUniqueFlag = matcher;
         }
+
+        return _matcherTestUniqueFlag;
     }
 }

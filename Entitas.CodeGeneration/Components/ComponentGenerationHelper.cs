@@ -150,56 +150,6 @@ public static class ComponentGenerationHelper
         return source + "\n";
     }
     
-    public static void TryGenerateEntityComponentInterfaces(SourceProductionContext spc, 
-        in ImmutableArray<ComponentData> componentsData,
-        Dictionary<string, ContextData> contextLookup)
-    {
-        foreach (var component in componentsData)
-        {
-            TryGenerateEntityComponentInterface(spc, component, contextLookup);
-        }
-    }
-
-    public static void TryGenerateEntityComponentInterface(SourceProductionContext spc, 
-        in ComponentData componentData,
-        Dictionary<string, ContextData> contextLookup)
-    {
-        var validContextCount = 0;
-        foreach (var contextName in componentData.ContextNames)
-        {
-            if (!contextLookup.ContainsKey(contextName))
-                continue;
-
-            validContextCount++;
-            if (validContextCount > 1)
-            {
-                GenerateEntityComponentInterface(spc, componentData, contextLookup);
-                return;
-            }
-        }
-    }
-    
-    public static void GenerateEntityComponentInterface(SourceProductionContext spc, 
-        in ComponentData componentData,
-        Dictionary<string, ContextData> contextLookup)
-    {
-        var componentName = componentData.GetComponentName(IgnoreNamespaces);
-
-        var source = (componentData.Members.Length == 0) ? 
-            ComponentTemplates.GetFlagComponentInterfaceSource(componentData) :
-            ComponentTemplates.GetStandardComponentInterfaceSource(componentData);
-        
-        foreach (var contextName in componentData.ContextNames)
-        {
-            if (!contextLookup.TryGetValue(contextName, out var contextData))
-                continue;
-            
-            source += "\n" + ComponentTemplates.GetEntityComponentInterfaceSource(contextData, componentData);
-        }
-        
-        spc.AddSource($"I{componentName}Entity.g.cs", SourceText.From(source, Encoding.UTF8));
-    }
-    
     // New components can be generated on the fly (like events)
     public static void GenerateExtraComponent(SourceProductionContext spc, 
         in ComponentData componentData)

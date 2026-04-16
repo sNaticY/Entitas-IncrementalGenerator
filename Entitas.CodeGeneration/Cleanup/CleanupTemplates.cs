@@ -28,7 +28,7 @@ public sealed class Destroy${ComponentName}${SystemType} : ICleanupSystem
 
     public Destroy${ComponentName}${SystemType}(Contexts contexts)
     {
-        _group = contexts.${contextName}.GetGroup(${MatcherType}.${ComponentName});
+        _group = contexts.${contextName}.GetGroup(${MatcherType}.${ComponentName}());
     }
 
     public void Cleanup()
@@ -68,7 +68,7 @@ public sealed class Remove${ComponentName}${SystemType} : ICleanupSystem
 
     public Remove${ComponentName}${SystemType}(Contexts contexts)
     {
-        _group = contexts.${contextName}.GetGroup(${MatcherType}.${ComponentName});
+        _group = contexts.${contextName}.GetGroup(${MatcherType}.${ComponentName}());
     }
 
     public void Cleanup()
@@ -90,7 +90,7 @@ public sealed class Remove${ComponentName}${SystemType} : ICleanupSystem
         fileName = "Remove" + componentName + contextData.SystemTypeName;
 
         var removeComponentSource = componentData.Members.Length == 0
-            ? $"{componentData.PrefixedComponentName()} = false"
+            ? $"Set{componentName}(false)"
             : $"Remove{componentName}()";
         
         return RemoveComponentCleanupSystemTemplate

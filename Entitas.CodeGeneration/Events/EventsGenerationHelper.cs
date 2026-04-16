@@ -77,12 +77,15 @@ public static class EventsGenerationHelper
         string eventListener,
         string eventListenerComponent)
     {
-        var eventListenerLower = eventListener.ToLowerFirst();
+        var getEventListener = "Get" + eventListener;
+        var hasEventListener = "Has" + eventListener;
 
         var eventEntitySource = EventsTemplates.EventEntityApiTemplate
+            .Replace("${EventExtensionsType}", contextData.ContextName + eventListenerComponent + "EventExtensions")
             .Replace("${EntityType}", contextData.EntityTypeName)
             .Replace("${EventListener}", eventListener)
-            .Replace("${eventListener}", eventListenerLower);
+            .Replace("${getEventListener}", getEventListener)
+            .Replace("${hasEventListener}", hasEventListener);
 
         spc.AddSource($"{contextData.ContextName + eventListenerComponent}Event.g.cs", 
             SourceText.From(eventEntitySource, Encoding.UTF8));
@@ -121,16 +124,16 @@ public static class EventsGenerationHelper
         in ContextData contextData,
         string eventListener)
     {
-        var eventListenerLower = eventListener.ToLowerFirst();
+        var getEventListener = "Get" + eventListener;
 
         var members = componentData.Members;
         var methodArgs = componentData.GetEventMethodArgs(eventData, ", " + (members.Length == 0
-            ? componentData.PrefixedComponentName()
+            ? $"e.{componentData.GetFlagCheckMethodName()}()"
             : string.Join(", ", members.Select(memberData => $"component.{memberData.Name}"))));
 
         var cachedAccess = componentData.Members.Length == 0
             ? string.Empty
-            : $"var component = e.{componentData.ComponentNameValidLowerFirst()};";
+            : $"var component = e.{componentData.GetComponentGetterMethodName()}();";
 
         if (eventData.EventType == EventType.Removed)
         {
@@ -154,7 +157,7 @@ public static class EventsGenerationHelper
             .Replace("${EventType}", eventData.GetEventTypeSuffix())
             .Replace("${EntityType}", contextData.EntityTypeName)
             .Replace("${EventListener}", eventListener)
-            .Replace("${eventListener}", eventListenerLower)
+            .Replace("${getEventListener}", getEventListener)
             .Replace("${contextName}", contextNameLower)
             .Replace("${MatcherType}", contextData.MatcherTypeName)
             .Replace("${ComponentName}", componentData.GetComponentName())
@@ -173,10 +176,10 @@ public static class EventsGenerationHelper
             switch (eventData.EventType)
             {
                 case EventType.Added:
-                    filter = $"entity.{componentData.PrefixedComponentName()}";
+                    filter = $"entity.{componentData.GetFlagCheckMethodName()}()";
                     break;
                 case EventType.Removed:
-                    filter = $"!entity.{componentData.PrefixedComponentName()}";
+                    filter = $"!entity.{componentData.GetFlagCheckMethodName()}()";
                     break;
             }
         }
@@ -185,16 +188,16 @@ public static class EventsGenerationHelper
             switch (eventData.EventType)
             {
                 case EventType.Added:
-                    filter = $"entity.has{componentData.GetComponentName()}";
+                    filter = $"entity.{componentData.GetHasComponentMethodName()}()";
                     break;
                 case EventType.Removed:
-                    filter = $"!entity.has{componentData.GetComponentName()}";
+                    filter = $"!entity.{componentData.GetHasComponentMethodName()}()";
                     break;
             }
         }
 
         if (eventData.EventTarget == EventTarget.Self)
-            filter += $" && entity.has{componentData.EventListener(contextName, eventData)}";
+            filter += $" && entity.Has{componentData.EventListener(contextName, eventData)}()";
 
         return filter;
     }

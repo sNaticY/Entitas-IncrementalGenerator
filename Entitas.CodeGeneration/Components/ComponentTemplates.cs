@@ -16,30 +16,30 @@ public sealed class ${FullComponentName} : Entitas.IComponent
 ";
 
     const string StandardComponentContextApiTemplate =
-        @"public partial class ${ContextType}
+        @"public static class ${ContextExtensionsType}
 {
-    public ${EntityType} ${componentName}Entity { get { return GetGroup(${MatcherType}.${ComponentName}).GetSingleEntity(); } }
-    public ${ComponentType} ${validComponentName} { get { return ${componentName}Entity.${componentName}; } }
-    public bool has${ComponentName} { get { return ${componentName}Entity != null; } }
+    public static ${EntityType} ${getComponentEntity}(this ${ContextType} context) { return context.GetGroup(${MatcherType}.${ComponentName}()).GetSingleEntity(); }
+    public static ${ComponentType} ${getComponent}(this ${ContextType} context) { return context.${getComponentEntity}().${getComponent}(); }
+    public static bool ${hasComponent}(this ${ContextType} context) { return context.${getComponentEntity}() != null; }
 
-    public ${EntityType} Set${ComponentName}(${newMethodParameters})
+    public static ${EntityType} Set${ComponentName}(this ${ContextType} context, ${newMethodParameters})
     {
-        if (has${ComponentName})
+        if (context.${hasComponent}())
         {
-            throw new Entitas.EntitasException(""Could not set ${ComponentName}!\n"" + this + "" already has an entity with ${ComponentType}!"",
-                ""You should check if the context already has a ${componentName}Entity before setting it or use context.Replace${ComponentName}()."");
+            throw new Entitas.EntitasException(""Could not set ${ComponentName}!\n"" + context + "" already has an entity with ${ComponentType}!"",
+                ""You should check if the context already has a ${getComponentEntity}() before setting it or use context.Replace${ComponentName}()."");
         }
-        var entity = CreateEntity();
+        var entity = context.CreateEntity();
         entity.Add${ComponentName}(${newMethodArgs});
         return entity;
     }
 
-    public void Replace${ComponentName}(${newMethodParameters})
+    public static void Replace${ComponentName}(this ${ContextType} context, ${newMethodParameters})
     {
-        var entity = ${componentName}Entity;
+        var entity = context.${getComponentEntity}();
         if (entity == null)
         {
-            entity = Set${ComponentName}(${newMethodArgs});
+            entity = context.Set${ComponentName}(${newMethodArgs});
         }
         else
         {
@@ -47,9 +47,9 @@ public sealed class ${FullComponentName} : Entitas.IComponent
         }
     }
 
-    public void Remove${ComponentName}()
+    public static void Remove${ComponentName}(this ${ContextType} context)
     {
-        ${componentName}Entity.Destroy();
+        context.${getComponentEntity}().Destroy();
     }
 }
 ";
@@ -59,44 +59,46 @@ public sealed class ${FullComponentName} : Entitas.IComponent
         in ComponentData componentData)
     {
         var componentName = componentData.GetComponentName();
-        var componentNameLower = componentName.ToLowerFirst();
-        var validComponentName = componentNameLower.AddPrefixIfIsKeyword();
         var newMethodParameters = componentData.Members.GetMethodParameters(true);
         var newMethodArgs = componentData.Members.GetMethodArgs(true);
+        var contextExtensionsType = contextData.ContextName + componentData.FullComponentName + "ContextExtensions";
 
         return StandardComponentContextApiTemplate
+            .Replace("${ContextExtensionsType}", contextExtensionsType)
             .Replace("${ContextType}", contextData.ContextTypeName)
             .Replace("${EntityType}", contextData.EntityTypeName)
             .Replace("${ComponentName}", componentName)
-            .Replace("${componentName}", componentNameLower)
+            .Replace("${getComponentEntity}", componentData.GetUniqueEntityGetterMethodName())
+            .Replace("${getComponent}", componentData.GetComponentGetterMethodName())
+            .Replace("${hasComponent}", componentData.GetHasComponentMethodName())
             .Replace("${MatcherType}", contextData.MatcherTypeName)
             .Replace("${ComponentType}", componentData.FullTypeName)
-            .Replace("${validComponentName}", validComponentName)
             .Replace("${newMethodParameters}", newMethodParameters)
             .Replace("${newMethodArgs}", newMethodArgs);
     }
-    
-    const string FlagComponentContextApiTemplate =
-        @"public partial class ${ContextType}
-{
-    public ${EntityType} ${componentName}Entity { get { return GetGroup(${MatcherType}.${ComponentName}).GetSingleEntity(); } }
 
-    public bool ${prefixedComponentName}
+    const string FlagComponentContextApiTemplate =
+        @"public static class ${ContextExtensionsType}
+{
+    public static ${EntityType} ${getComponentEntity}(this ${ContextType} context) { return context.GetGroup(${MatcherType}.${ComponentName}()).GetSingleEntity(); }
+
+    public static bool ${flagCheck}(this ${ContextType} context)
     {
-        get { return ${componentName}Entity != null; }
-        set
+        return context.${getComponentEntity}() != null;
+    }
+
+    public static void ${flagSet}(this ${ContextType} context, bool value)
+    {
+        var entity = context.${getComponentEntity}();
+        if (value != (entity != null))
         {
-            var entity = ${componentName}Entity;
-            if (value != (entity != null))
+            if (value)
             {
-                if (value)
-                {
-                    CreateEntity().${prefixedComponentName} = true;
-                }
-                else
-                {
-                    entity.Destroy();
-                }
+                context.CreateEntity().${flagSet}(true);
+            }
+            else
+            {
+                entity.Destroy();
             }
         }
     }
@@ -109,42 +111,45 @@ public sealed class ${FullComponentName} : Entitas.IComponent
         in ComponentData componentData)
     {
         var componentName = componentData.GetComponentName();
-        var componentNameLower = componentName.ToLowerFirst();
-        
+        var contextExtensionsType = contextData.ContextName + componentData.FullComponentName + "ContextExtensions";
+
         return FlagComponentContextApiTemplate
+            .Replace("${ContextExtensionsType}", contextExtensionsType)
             .Replace("${ContextType}", contextData.ContextTypeName)
             .Replace("${EntityType}", contextData.EntityTypeName)
             .Replace("${ComponentName}", componentName)
-            .Replace("${componentName}", componentNameLower)
+            .Replace("${getComponentEntity}", componentData.GetUniqueEntityGetterMethodName())
+            .Replace("${flagCheck}", componentData.GetFlagCheckMethodName())
+            .Replace("${flagSet}", componentData.GetFlagSetMethodName())
             .Replace("${MatcherType}", contextData.MatcherTypeName)
             .Replace("${prefixedComponentName}", componentData.PrefixedComponentName());
     }
-    
+
     const string StandardComponentEntityApiTemplate =
-        @"public partial class ${EntityType}
+        @"public static class ${EntityExtensionsType}
 {
-    public ${ComponentType} ${validComponentName} { get { return (${ComponentType})GetComponent(${Index}); } }
-    public bool has${ComponentName} { get { return HasComponent(${Index}); } }
+    public static ${ComponentType} ${getComponent}(this ${EntityType} entity) { return (${ComponentType})entity.GetComponent(${Index}); }
+    public static bool ${hasComponent}(this ${EntityType} entity) { return entity.HasComponent(${Index}); }
 
-    public void Add${ComponentName}(${newMethodParameters})
+    public static void Add${ComponentName}(this ${EntityType} entity, ${newMethodParameters})
     {
         var index = ${Index};
-        var component = (${ComponentType})CreateComponent(index, typeof(${ComponentType}));
+        var component = (${ComponentType})entity.CreateComponent(index, typeof(${ComponentType}));
 ${memberAssignmentList}
-        AddComponent(index, component);
+        entity.AddComponent(index, component);
     }
 
-    public void Replace${ComponentName}(${newMethodParameters})
+    public static void Replace${ComponentName}(this ${EntityType} entity, ${newMethodParameters})
     {
         var index = ${Index};
-        var component = (${ComponentType})CreateComponent(index, typeof(${ComponentType}));
+        var component = (${ComponentType})entity.CreateComponent(index, typeof(${ComponentType}));
 ${memberAssignmentList}
-        ReplaceComponent(index, component);
+        entity.ReplaceComponent(index, component);
     }
 
-    public void Remove${ComponentName}()
+    public static void Remove${ComponentName}(this ${EntityType} entity)
     {
-        RemoveComponent(${Index});
+        entity.RemoveComponent(${Index});
     }
 }
 ";
@@ -155,46 +160,49 @@ ${memberAssignmentList}
     {
         var componentName = componentData.GetComponentName();
         var componentIndex = componentData.GetComponentIndex(contextData);
-        var validComponentName = componentName.ToLowerFirst().AddPrefixIfIsKeyword();
         var newMethodParameters = componentData.Members.GetMethodParameters(true);
         var memberAssignmentList = componentData.Members.GetMemberAssignmentList();
+        var entityExtensionsType = contextData.ContextName + componentData.FullComponentName + "EntityExtensions";
 
         return StandardComponentEntityApiTemplate
+            .Replace("${EntityExtensionsType}", entityExtensionsType)
             .Replace("${EntityType}", contextData.EntityTypeName)
             .Replace("${ComponentType}", componentData.FullTypeName)
             .Replace("${ComponentName}", componentName)
             .Replace("${Index}", componentIndex)
-            .Replace("${validComponentName}", validComponentName)
+            .Replace("${getComponent}", componentData.GetComponentGetterMethodName())
+            .Replace("${hasComponent}", componentData.GetHasComponentMethodName())
             .Replace("${newMethodParameters}", newMethodParameters)
             .Replace("${memberAssignmentList}", memberAssignmentList);
     }
 
     const string FlagComponentEntityApiTemplate =
-        @"public partial class ${EntityType}
+        @"public static class ${EntityExtensionsType}
 {
     static readonly ${ComponentType} ${componentName}Component = new ${ComponentType}();
 
-    public bool ${prefixedComponentName}
+    public static bool ${flagCheck}(this ${EntityType} entity)
     {
-        get { return HasComponent(${Index}); }
-        set 
-        {
-            if (value != ${prefixedComponentName})
-            {
-                var index = ${Index};
-                if (value)
-                {
-                    var componentPool = GetComponentPool(index);
-                    var component = componentPool.Count > 0
-                            ? componentPool.Pop()
-                            : ${componentName}Component;
+        return entity.HasComponent(${Index});
+    }
 
-                    AddComponent(index, component);
-                }
-                else
-                {
-                    RemoveComponent(index);
-                }
+    public static void ${flagSet}(this ${EntityType} entity, bool value)
+    {
+        if (value != entity.${flagCheck}())
+        {
+            var index = ${Index};
+            if (value)
+            {
+                var componentPool = entity.GetComponentPool(index);
+                var component = componentPool.Count > 0
+                        ? componentPool.Pop()
+                        : ${componentName}Component;
+
+                entity.AddComponent(index, component);
+            }
+            else
+            {
+                entity.RemoveComponent(index);
             }
         }
     }
@@ -206,63 +214,13 @@ ${memberAssignmentList}
         in ComponentData componentData)
     {
         return FlagComponentEntityApiTemplate
+            .Replace("${EntityExtensionsType}", contextData.ContextName + componentData.FullComponentName + "EntityExtensions")
             .Replace("${EntityType}", contextData.EntityTypeName)
             .Replace("${ComponentType}", componentData.FullTypeName)
             .Replace("${componentName}", componentData.GetComponentNameLowerFirst())
             .Replace("${Index}", componentData.GetComponentIndex(contextData))
-            .Replace("${prefixedComponentName}", componentData.PrefixedComponentName());
-    }
-
-    const string StandardComponentInterfaceTemplate =
-        @"public partial interface I${ComponentName}Entity
-{
-    ${ComponentType} ${validComponentName} { get; }
-    bool has${ComponentName} { get; }
-
-    void Add${ComponentName}(${newMethodParameters});
-    void Replace${ComponentName}(${newMethodParameters});
-    void Remove${ComponentName}();
-}
-";
-    
-    public static string GetStandardComponentInterfaceSource(
-        in ComponentData componentData)
-    { 
-        var componentName = componentData.GetComponentName();
-        var validComponentName = componentName.ToLowerFirst().AddPrefixIfIsKeyword();
-        var newMethodParameters = componentData.Members.GetMethodParameters(true);
-
-        return StandardComponentInterfaceTemplate
-            .Replace("${ComponentName}", componentName)
-            .Replace("${ComponentType}", componentData.FullTypeName)
-            .Replace("${validComponentName}", validComponentName)
-            .Replace("${newMethodParameters}", newMethodParameters);
-    }
-
-    const string FlagComponentInterfaceTemplate =
-        @"public partial interface I${ComponentName}Entity
-{
-    bool ${prefixedComponentName} { get; set; }
-}
-";
-    
-    public static string GetFlagComponentInterfaceSource(
-        in ComponentData componentData)
-    {
-        return FlagComponentInterfaceTemplate
-            .Replace("${ComponentName}", componentData.GetComponentName())
-            .Replace("${prefixedComponentName}", componentData.PrefixedComponentName());
-    }
-
-    const string EntityComponentInterfaceTemplate = "public partial class ${EntityType} : I${ComponentName}Entity { }\n";
-
-    public static string GetEntityComponentInterfaceSource(
-        in ContextData contextData,
-        in ComponentData componentData)
-    {
-        return EntityComponentInterfaceTemplate
-            .Replace("${EntityType}", contextData.EntityTypeName)
-            .Replace("${ComponentName}", componentData.GetComponentName());
+            .Replace("${flagCheck}", componentData.GetFlagCheckMethodName())
+            .Replace("${flagSet}", componentData.GetFlagSetMethodName());
     }
 
     const string ComponentMatcherApiTemplate =
@@ -270,19 +228,16 @@ ${memberAssignmentList}
 {
     static Entitas.IMatcher<${EntityType}> _matcher${ComponentName};
 
-    public static Entitas.IMatcher<${EntityType}> ${ComponentName}
+    public static Entitas.IMatcher<${EntityType}> ${ComponentName}()
     {
-        get
+        if (_matcher${ComponentName} == null)
         {
-            if (_matcher${ComponentName} == null)
-            {
-                var matcher = (Entitas.Matcher<${EntityType}>)Entitas.Matcher<${EntityType}>.AllOf(${Index});
-                matcher.componentNames = ${componentNames};
-                _matcher${ComponentName} = matcher;
-            }
-
-            return _matcher${ComponentName};
+            var matcher = (Entitas.Matcher<${EntityType}>)Entitas.Matcher<${EntityType}>.AllOf(${Index});
+            matcher.componentNames = ${componentNames};
+            _matcher${ComponentName} = matcher;
         }
+
+        return _matcher${ComponentName};
     }
 }
 ";
